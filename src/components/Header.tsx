@@ -46,7 +46,7 @@ const Header = () => {
                 isScrolled ? "text-foreground" : "text-primary-foreground"
               }`}
             >
-              Sylvia
+              Purjejaht Sylvia
             </span>
           </a>
 
@@ -68,8 +68,9 @@ const Header = () => {
             <Button
               variant={isScrolled ? "hero" : "gold"}
               size="sm"
+              asChild
             >
-              Võta ühendust
+              <a href="mailto:aarekoop@gmail.com">Võta ühendust</a>
             </Button>
           </nav>
 
@@ -109,8 +110,8 @@ const Header = () => {
                 {link.label}
               </a>
             ))}
-            <Button variant="hero" className="w-full mt-4">
-              Võta ühendust
+            <Button variant="hero" className="w-full mt-4" asChild>
+              <a href="mailto:aarekoop@gmail.com">Võta ühendust</a>
             </Button>
           </motion.div>
         )}

@@ -27,13 +27,15 @@ const BookingForm = () => {
     message: "",
   });
 
-  // Combine all stages for dropdown
+  // Combine all stages for dropdown, excluding start point
   const allStages = voyageSections.flatMap((section) =>
-    section.stages.map((stage) => ({
-      id: stage.id,
-      label: `${stage.id}. ${stage.city} (${stage.duration}) - ${stage.price}€`,
-      price: stage.price,
-    }))
+    section.stages
+      .filter((stage) => !stage.isStartPoint)
+      .map((stage) => ({
+        id: stage.id,
+        label: `${stage.city} (${stage.duration}) - ${stage.pricePerDay}€/päev`,
+        pricePerDay: stage.pricePerDay,
+      }))
   );
 
   const handleSubmit = async (e: React.FormEvent) => {

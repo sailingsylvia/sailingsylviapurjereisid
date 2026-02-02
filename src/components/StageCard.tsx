@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
-import { MapPin, Calendar, Navigation, Compass, Waves, Euro } from "lucide-react";
+import { MapPin, Calendar, Navigation, Compass, Waves, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { VoyageStage } from "@/data/voyageData";
+import { VoyageStage, sailingTrainingTopics } from "@/data/voyageData";
 
 interface StageCardProps {
   stage: VoyageStage;
@@ -18,6 +18,9 @@ const StageCard = ({ stage, index, image }: StageCardProps) => {
       element.scrollIntoView({ behavior: "smooth" });
     }
   };
+
+  // Don't show price section for start point
+  const showPrice = !stage.isStartPoint && stage.pricePerDay > 0;
 
   return (
     <motion.article
@@ -41,17 +44,22 @@ const StageCard = ({ stage, index, image }: StageCardProps) => {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 to-transparent" />
           
-          {/* Stage number badge */}
-          <div className="absolute top-4 left-4 h-12 px-4 rounded-full bg-ocean-gradient flex items-center justify-center">
-            <span className="font-display text-lg text-primary-foreground">{stage.id}</span>
-          </div>
-
           {/* Distance badge */}
           {stage.distanceFromPrevious && (
             <div className="absolute top-4 right-4 bg-card/90 backdrop-blur-sm px-3 py-1.5 rounded-full">
               <span className="text-sm font-medium text-ocean-medium flex items-center gap-1">
                 <Navigation size={14} />
                 {stage.distanceFromPrevious} nm
+              </span>
+            </div>
+          )}
+
+          {/* Sailing training badge */}
+          {stage.hasSailingTraining && (
+            <div className="absolute top-4 left-4 bg-gold/90 backdrop-blur-sm px-3 py-1.5 rounded-full">
+              <span className="text-sm font-medium text-foreground flex items-center gap-1">
+                <GraduationCap size={14} />
+                Purjetamiskoolitus
               </span>
             </div>
           )}
@@ -77,27 +85,57 @@ const StageCard = ({ stage, index, image }: StageCardProps) => {
 
       {/* Content */}
       <div className="lg:w-1/2 px-4 lg:px-8">
-        {/* Price display */}
-        <div className="mb-6 p-4 bg-secondary rounded-xl border border-border">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-sm text-muted-foreground">Hind alates</span>
-              <div className="flex items-center gap-1">
-                <span className="font-display text-3xl text-gold">{stage.price}</span>
-                <Euro size={24} className="text-gold" />
+        {/* Price display - only for non-start points */}
+        {showPrice && (
+          <div className="mb-6 p-4 bg-secondary rounded-xl border border-border">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-sm text-muted-foreground">Hind</span>
+                <div className="flex items-baseline gap-1">
+                  <span className="font-display text-3xl text-gold">{stage.pricePerDay}€</span>
+                  <span className="text-sm text-muted-foreground">/ päev / inimene</span>
+                </div>
               </div>
-            </div>
-            {stage.priceInfo && (
-              <span className="text-xs text-muted-foreground max-w-[120px] text-right">
+              <span className="text-xs text-muted-foreground max-w-[140px] text-right">
                 {stage.priceInfo}
               </span>
-            )}
+            </div>
           </div>
-        </div>
+        )}
+
+        {stage.isStartPoint && (
+          <div className="mb-6 p-4 bg-ocean-deep/10 rounded-xl border border-ocean-medium/30">
+            <div className="flex items-center gap-2">
+              <Navigation className="text-ocean-medium" size={20} />
+              <span className="font-display text-lg text-ocean-deep">Stardipunkt</span>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              Siit algab meie suur purjeseiklus Vahemere poole
+            </p>
+          </div>
+        )}
 
         <p className="text-muted-foreground leading-relaxed mb-6">
           {stage.description}
         </p>
+
+        {/* Sailing Training Section */}
+        {stage.hasSailingTraining && (
+          <div className="mb-6 p-4 bg-gold/10 rounded-xl border border-gold/30">
+            <h4 className="flex items-center gap-2 font-display text-lg text-foreground mb-3">
+              <GraduationCap size={18} className="text-gold" />
+              Intensiivne purjetamiskoolitus
+            </h4>
+            <ul className="space-y-1.5 text-sm text-muted-foreground">
+              {sailingTrainingTopics.map((topic, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-gold mt-0.5">•</span>
+                  {topic}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Highlights */}
         <div className="mb-6">
@@ -117,27 +155,31 @@ const StageCard = ({ stage, index, image }: StageCardProps) => {
           </div>
         </div>
 
-        {/* Activities */}
-        <div className="mb-8">
-          <h4 className="flex items-center gap-2 font-display text-lg text-foreground mb-3">
-            <Waves size={18} className="text-ocean-light" />
-            Tegevused
-          </h4>
-          <div className="flex flex-wrap gap-2">
-            {stage.activities.map((activity, i) => (
-              <span
-                key={i}
-                className="px-3 py-1.5 border border-border text-muted-foreground text-sm rounded-full"
-              >
-                {activity}
-              </span>
-            ))}
+        {/* Activities - only if there are any */}
+        {stage.activities.length > 0 && (
+          <div className="mb-8">
+            <h4 className="flex items-center gap-2 font-display text-lg text-foreground mb-3">
+              <Waves size={18} className="text-ocean-light" />
+              Tegevused
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {stage.activities.map((activity, i) => (
+                <span
+                  key={i}
+                  className="px-3 py-1.5 border border-border text-muted-foreground text-sm rounded-full"
+                >
+                  {activity}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
-        <Button variant="hero" size="lg" onClick={scrollToBooking}>
-          Broneeri see etapp
-        </Button>
+        {!stage.isStartPoint && (
+          <Button variant="hero" size="lg" onClick={scrollToBooking}>
+            Broneeri see etapp
+          </Button>
+        )}
       </div>
     </motion.article>
   );
