@@ -60,7 +60,7 @@ const AboutSection = () => {
               Jaht Sylvia
             </h3>
             <p className="text-muted-foreground mb-6 leading-relaxed">
-              Ruumikas ja mugav <strong className="text-foreground">Grand Soleil 43</strong> pakub mugavat äraolemist 6+1 reisijale koos magamiskohtadega ja kuni 10 reisijale lühemateks meresõitudeks.
+              Ruumikas ja mugav <strong className="text-foreground">Grand Soleil 43</strong> pakub mugavat äraolemist 7+2 reisijale koos magamiskohtadega (kambüüsi mahub magama 2 ja vöörikajutisse 3) ja kuni 10 reisijale lühemateks meresõitudeks.
             </p>
             <p className="text-muted-foreground mb-6 leading-relaxed">
               Laevas on kolm kahekohalist kajutit, avar salong, täisvarustuses köök (meresõitjate keeles kambüüs) ja kaks WC-d/dušširuumi. Välistekk on piisavalt avar, et seal kogu meeskonnaga päevitada.
@@ -76,7 +76,7 @@ const AboutSection = () => {
                 <div className="text-xs text-muted-foreground uppercase tracking-wider">Pikkus</div>
               </div>
               <div className="text-center p-4 bg-secondary rounded-xl">
-                <div className="text-2xl font-display text-ocean-deep mb-1">6+1</div>
+                <div className="text-2xl font-display text-ocean-deep mb-1">7+2</div>
                 <div className="text-xs text-muted-foreground uppercase tracking-wider">Magamiskohti</div>
               </div>
               <div className="text-center p-4 bg-secondary rounded-xl">

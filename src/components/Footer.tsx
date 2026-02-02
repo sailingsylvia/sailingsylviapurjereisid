@@ -9,7 +9,7 @@ const Footer = () => {
           <div>
             <div className="flex items-center gap-3 mb-4">
               <Anchor size={32} className="text-gold" />
-              <span className="font-display text-2xl">Sylvia</span>
+              <span className="font-display text-2xl">Purjejaht Sylvia</span>
             </div>
             <p className="text-primary-foreground/70 leading-relaxed">
               Purjereisid Euroopa kauneimates sadamates. 
@@ -34,22 +34,32 @@ const Footer = () => {
             <ul className="space-y-3 text-primary-foreground/70">
               <li className="flex items-center gap-2">
                 <Mail size={18} />
-                <a href="mailto:info@sylvia-sailing.ee" className="hover:text-gold transition-colors">
-                  info@sylvia-sailing.ee
+                <a href="mailto:aarekoop@gmail.com" className="hover:text-gold transition-colors">
+                  aarekoop@gmail.com
                 </a>
               </li>
               <li className="flex items-center gap-2">
                 <Phone size={18} />
-                <a href="tel:+3725551234" className="hover:text-gold transition-colors">
-                  +372 555 1234
+                <a href="tel:+3725030001" className="hover:text-gold transition-colors">
+                  +372 503 0001
                 </a>
               </li>
             </ul>
             <div className="flex gap-4 mt-6">
-              <a href="#" className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-gold transition-colors">
+              <a 
+                href="https://www.instagram.com/sailing_sylvia" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-gold transition-colors"
+              >
                 <Instagram size={20} />
               </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-gold transition-colors">
+              <a 
+                href="https://www.facebook.com/merelesylviaga" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-gold transition-colors"
+              >
                 <Facebook size={20} />
               </a>
             </div>
@@ -57,7 +67,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-primary-foreground/20 mt-12 pt-8 text-center text-primary-foreground/50 text-sm">
-          © 2026 Purjejht Sylvia. Kõik õigused kaitstud.
+          © 2026 Purjejaht Sylvia. Kõik õigused kaitstud.
         </div>
       </div>
     </footer>

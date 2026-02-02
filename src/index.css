@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Lato:wght@300;400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -43,7 +43,7 @@
     --ocean-light: 195 70% 50%;
     --sand: 40 40% 90%;
     --sand-dark: 35 30% 75%;
-    --gold: 45 75% 45%;
+    --gold: 45 55% 53%;
     --sunset: 25 90% 60%;
 
     /* Gradients */
@@ -113,11 +113,11 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Lato', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Cormorant Garamond', serif;
     @apply font-semibold tracking-tight;
   }
 }

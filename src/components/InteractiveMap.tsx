@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Map, Navigation } from "lucide-react";
+import { Navigation } from "lucide-react";
 import { voyageSections, totalDistanceSection1 } from "@/data/voyageData";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -30,23 +30,28 @@ const InteractiveMap = () => {
       maxZoom: 19,
     }).addTo(map);
 
+    // Gold color from CSS - #cba747
+    const goldColor = "#cba747";
+    const oceanColor = "#1e3a5f";
+    const accentColor = "#0891b2";
+
     // Create custom marker icons
     const createMarkerIcon = (isStart: boolean, isEnd: boolean) => {
-      const color = isStart ? "#1e3a5f" : isEnd ? "#b8860b" : "#0891b2";
+      const color = isStart ? oceanColor : isEnd ? goldColor : accentColor;
       return L.divIcon({
         className: "custom-marker",
         html: `
           <div style="
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             background: ${color};
             border: 3px solid white;
             border-radius: 50%;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
           "></div>
         `,
-        iconSize: [24, 24],
-        iconAnchor: [12, 12],
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
       });
     };
 
@@ -57,41 +62,90 @@ const InteractiveMap = () => {
     ] as [number, number]);
 
     L.polyline(routeCoordinates, {
-      color: "#0891b2",
+      color: accentColor,
       weight: 3,
       opacity: 0.8,
       dashArray: "10, 8",
     }).addTo(map);
 
-    // Add markers for each stage
+    // Add distance labels on route segments
+    for (let i = 1; i < mainStages.length; i++) {
+      const stage = mainStages[i];
+      const prevStage = mainStages[i - 1];
+      
+      if (stage.distanceFromPrevious) {
+        // Calculate midpoint
+        const midLat = (stage.coordinates.lat + prevStage.coordinates.lat) / 2;
+        const midLng = (stage.coordinates.lng + prevStage.coordinates.lng) / 2;
+        
+        // Add distance label
+        const distanceIcon = L.divIcon({
+          className: "distance-label",
+          html: `
+            <div style="
+              background: white;
+              padding: 2px 6px;
+              border-radius: 10px;
+              font-size: 10px;
+              font-weight: 600;
+              color: ${accentColor};
+              white-space: nowrap;
+              box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+              border: 1px solid ${accentColor};
+            ">${stage.distanceFromPrevious} nm</div>
+          `,
+          iconSize: [50, 20],
+          iconAnchor: [25, 10],
+        });
+        
+        L.marker([midLat, midLng], { icon: distanceIcon, interactive: false }).addTo(map);
+      }
+    }
+
+    // Add markers and labels for each stage
     mainStages.forEach((stage, index) => {
       const isStart = index === 0;
       const isEnd = index === mainStages.length - 1;
 
-      const marker = L.marker([stage.coordinates.lat, stage.coordinates.lng], {
+      // Add marker
+      L.marker([stage.coordinates.lat, stage.coordinates.lng], {
         icon: createMarkerIcon(isStart, isEnd),
       }).addTo(map);
 
-      // Create popup content with distance info
-      const distanceText = stage.distanceFromPrevious
-        ? `<span style="color: #0891b2; font-size: 12px;">← ${stage.distanceFromPrevious} nm</span>`
-        : "";
+      // Add persistent label with city name and date
+      const labelOffset = index % 2 === 0 ? -35 : 35;
+      const labelIcon = L.divIcon({
+        className: "city-label",
+        html: `
+          <div style="
+            background: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: ${oceanColor};
+            white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            border-left: 3px solid ${isStart ? oceanColor : isEnd ? goldColor : accentColor};
+            text-align: left;
+          ">
+            <div style="font-weight: 700; font-size: 12px;">${stage.city}</div>
+            ${stage.arrivalDate ? `<div style="font-size: 10px; color: #666; font-weight: 400;">${stage.arrivalDate}</div>` : ''}
+          </div>
+        `,
+        iconSize: [100, 40],
+        iconAnchor: [-15, 20 + labelOffset * 0.3],
+      });
 
-      marker.bindPopup(`
-        <div style="text-align: center; min-width: 120px;">
-          <strong style="font-size: 14px;">${stage.city}</strong>
-          <br/>
-          <span style="color: #666; font-size: 12px;">${stage.countryCode}</span>
-          <br/>
-          <span style="color: #888; font-size: 11px;">${stage.duration}</span>
-          ${distanceText ? `<br/>${distanceText}` : ""}
-        </div>
-      `);
+      L.marker([stage.coordinates.lat, stage.coordinates.lng], { 
+        icon: labelIcon,
+        interactive: false 
+      }).addTo(map);
     });
 
     // Fit bounds to show all markers
     const bounds = L.latLngBounds(routeCoordinates);
-    map.fitBounds(bounds, { padding: [30, 30] });
+    map.fitBounds(bounds, { padding: [50, 50] });
 
     return () => {
       if (mapInstanceRef.current) {
