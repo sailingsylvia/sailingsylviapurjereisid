@@ -68,39 +68,62 @@ const InteractiveMap = () => {
       dashArray: "10, 8",
     }).addTo(map);
 
-    // Add distance labels on route segments
+    // Add distance labels on route segments with offset to avoid overlap
     for (let i = 1; i < mainStages.length; i++) {
       const stage = mainStages[i];
       const prevStage = mainStages[i - 1];
       
       if (stage.distanceFromPrevious) {
-        // Calculate midpoint
+        // Calculate midpoint with slight offset to avoid line overlap
         const midLat = (stage.coordinates.lat + prevStage.coordinates.lat) / 2;
         const midLng = (stage.coordinates.lng + prevStage.coordinates.lng) / 2;
+        
+        // Add perpendicular offset based on segment direction
+        const latDiff = stage.coordinates.lat - prevStage.coordinates.lat;
+        const lngDiff = stage.coordinates.lng - prevStage.coordinates.lng;
+        const length = Math.sqrt(latDiff * latDiff + lngDiff * lngDiff);
+        const offsetDistance = 0.3;
+        const offsetLat = midLat + (lngDiff / length) * offsetDistance * (i % 2 === 0 ? 1 : -1);
+        const offsetLng = midLng - (latDiff / length) * offsetDistance * (i % 2 === 0 ? 1 : -1);
         
         // Add distance label
         const distanceIcon = L.divIcon({
           className: "distance-label",
           html: `
             <div style="
-              background: white;
-              padding: 2px 6px;
-              border-radius: 10px;
-              font-size: 10px;
+              background: rgba(255,255,255,0.95);
+              padding: 2px 5px;
+              border-radius: 8px;
+              font-size: 9px;
               font-weight: 600;
               color: ${accentColor};
               white-space: nowrap;
-              box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+              box-shadow: 0 1px 3px rgba(0,0,0,0.15);
               border: 1px solid ${accentColor};
             ">${stage.distanceFromPrevious} nm</div>
           `,
-          iconSize: [50, 20],
-          iconAnchor: [25, 10],
+          iconSize: [45, 18],
+          iconAnchor: [22, 9],
         });
         
-        L.marker([midLat, midLng], { icon: distanceIcon, interactive: false }).addTo(map);
+        L.marker([offsetLat, offsetLng], { icon: distanceIcon, interactive: false }).addTo(map);
       }
     }
+
+    // Position offsets for each city to avoid overlapping labels
+    const labelPositions: Record<string, { anchorX: number; anchorY: number }> = {
+      "Roomassaare": { anchorX: -10, anchorY: -35 },
+      "Kiel": { anchorX: -80, anchorY: 5 },
+      "Düsseldorf": { anchorX: -85, anchorY: -25 },
+      "Brest": { anchorX: -10, anchorY: 25 },
+      "Vilamoura": { anchorX: -85, anchorY: 5 },
+      "Moraira": { anchorX: -10, anchorY: -35 },
+      "Ibiza": { anchorX: -10, anchorY: 25 },
+      "Mallorca": { anchorX: -10, anchorY: -35 },
+      "Sardiinia": { anchorX: -10, anchorY: -35 },
+      "Orikum": { anchorX: -85, anchorY: -5 },
+      "Korfu": { anchorX: -10, anchorY: 25 },
+    };
 
     // Add markers and labels for each stage
     mainStages.forEach((stage, index) => {
@@ -112,29 +135,31 @@ const InteractiveMap = () => {
         icon: createMarkerIcon(isStart, isEnd),
       }).addTo(map);
 
+      // Get custom position or use default
+      const pos = labelPositions[stage.city] || { anchorX: -10, anchorY: index % 2 === 0 ? -35 : 25 };
+
       // Add persistent label with city name and date
-      const labelOffset = index % 2 === 0 ? -35 : 35;
       const labelIcon = L.divIcon({
         className: "city-label",
         html: `
           <div style="
-            background: white;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 11px;
+            background: rgba(255,255,255,0.95);
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 10px;
             font-weight: 600;
             color: ${oceanColor};
             white-space: nowrap;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-            border-left: 3px solid ${isStart ? oceanColor : isEnd ? goldColor : accentColor};
+            box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+            border-left: 2px solid ${isStart ? oceanColor : isEnd ? goldColor : accentColor};
             text-align: left;
           ">
-            <div style="font-weight: 700; font-size: 12px;">${stage.city}</div>
-            ${stage.arrivalDate ? `<div style="font-size: 10px; color: #666; font-weight: 400;">${stage.arrivalDate}</div>` : ''}
+            <div style="font-weight: 700; font-size: 10px;">${stage.city}</div>
+            ${stage.arrivalDate ? `<div style="font-size: 9px; color: #555; font-weight: 400;">${stage.arrivalDate}</div>` : ''}
           </div>
         `,
-        iconSize: [100, 40],
-        iconAnchor: [-15, 20 + labelOffset * 0.3],
+        iconSize: [90, 35],
+        iconAnchor: [pos.anchorX, pos.anchorY],
       });
 
       L.marker([stage.coordinates.lat, stage.coordinates.lng], { 

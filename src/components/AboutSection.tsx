@@ -186,13 +186,64 @@ const AboutSection = () => {
           </div>
         </motion.div>
 
-        {/* What's included */}
+        {/* Pricing Section */}
         <motion.div
-          className="mt-20 bg-secondary rounded-2xl p-8 md:p-12"
+          className="mt-20 bg-gold/10 rounded-2xl p-8 md:p-12 border border-gold/30"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <div className="flex items-center gap-3 mb-8">
+            <span className="text-3xl">💰</span>
+            <h3 className="font-display text-2xl text-foreground">Hinnad</h3>
+          </div>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center p-4 bg-card rounded-xl border border-border">
+                <span className="text-foreground font-medium">1.–8. päev</span>
+                <span className="text-gold font-display text-lg">120€ / päev / inimene</span>
+              </div>
+              <div className="flex justify-between items-center p-4 bg-card rounded-xl border border-border">
+                <span className="text-foreground font-medium">Varem osalenu (1.–8. päev)</span>
+                <span className="text-gold font-display text-lg">100€ / päev / inimene</span>
+              </div>
+              <div className="flex justify-between items-center p-4 bg-card rounded-xl border border-border">
+                <span className="text-foreground font-medium">Noorukid 14–20 a.</span>
+                <span className="text-gold font-display text-lg">70€ / päev</span>
+              </div>
+              <div className="flex justify-between items-center p-4 bg-card rounded-xl border border-border">
+                <span className="text-foreground font-medium">Perepääse</span>
+                <span className="text-gold font-display text-lg">100€ / päev / inimene</span>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center p-4 bg-card rounded-xl border border-border">
+                <span className="text-foreground font-medium">Alates 8. päevast</span>
+                <span className="text-gold font-display text-lg">100€ / päev / inimene</span>
+              </div>
+              <div className="flex justify-between items-center p-4 bg-card rounded-xl border border-border">
+                <span className="text-foreground font-medium">Grupp alates 6 inimest</span>
+                <span className="text-gold font-display text-lg">100€ / päev / inimene</span>
+              </div>
+              <div className="flex justify-between items-center p-4 bg-card rounded-xl border border-border">
+                <span className="text-foreground font-medium">Kogu jahi rent</span>
+                <span className="text-gold font-display text-lg">600€ / päev</span>
+              </div>
+              <p className="text-sm text-muted-foreground italic p-2">
+                * Kogu jahi rentimisel tuleb valida terve etapp
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* What's included */}
+        <motion.div
+          className="mt-8 bg-secondary rounded-2xl p-8 md:p-12"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.3 }}
         >
           <div className="flex items-center gap-3 mb-6">
             <Users className="text-ocean-medium" size={28} />
@@ -200,44 +251,28 @@ const AboutSection = () => {
           </div>
           <div className="grid md:grid-cols-2 gap-8">
             <div>
-              <h4 className="font-semibold text-foreground mb-4">Tasu eest saad:</h4>
+              <h4 className="font-semibold text-foreground mb-4">Hinna sees:</h4>
               <ul className="space-y-3 text-muted-foreground">
                 <li className="flex items-start gap-2">
                   <span className="text-ocean-medium mt-1">✓</span>
-                  Seilata luksusliku purjejahi Sylvia (Grand Soleil 43) pardal
+                  Padjad-tekid, voodipesu, käterätik
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-ocean-medium mt-1">✓</span>
-                  Õppida purjetamist vilunud kapteni suunamisel
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-ocean-medium mt-1">✓</span>
-                  Laevakütus, sadamamaksud ja aluse kindlustus
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-ocean-medium mt-1">✓</span>
-                  Kasutada jahis kõike toidu valmistamiseks vajalikku
+                  Kohv, tee, joogivesi
                 </li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-foreground mb-4">Lisaks tuleb arvestada:</h4>
+              <h4 className="font-semibold text-foreground mb-4">Jagatakse võrdselt osalejate vahel:</h4>
               <ul className="space-y-3 text-muted-foreground">
                 <li className="flex items-start gap-2">
                   <span className="text-gold mt-1">•</span>
-                  Transport sadamatesse
+                  Sadamamaksud
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-gold mt-1">•</span>
-                  Meelelahutus kaldal (restoranid, vaatamisväärsused)
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-gold mt-1">•</span>
-                  Isiklik reisikindlustus
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-gold mt-1">•</span>
-                  Toidukraam – ostetakse ühiselt ja jagatakse meeskonna peale
+                  Toidukulu pardal
                 </li>
               </ul>
             </div>

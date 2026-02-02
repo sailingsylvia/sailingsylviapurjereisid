@@ -85,20 +85,17 @@ const StageCard = ({ stage, index, image }: StageCardProps) => {
 
       {/* Content */}
       <div className="lg:w-1/2 px-4 lg:px-8">
-        {/* Price display - only for non-start points */}
+        {/* Duration and booking info - only for non-start points */}
         {showPrice && (
           <div className="mb-6 p-4 bg-secondary rounded-xl border border-border">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Calendar className="text-ocean-medium" size={20} />
               <div>
-                <span className="text-sm text-muted-foreground">Hind</span>
-                <div className="flex items-baseline gap-1">
-                  <span className="font-display text-3xl text-gold">{stage.pricePerDay}€</span>
-                  <span className="text-sm text-muted-foreground">/ päev / inimene</span>
-                </div>
+                <span className="font-display text-lg text-foreground">{stage.duration}</span>
+                {stage.arrivalDate && (
+                  <span className="text-sm text-muted-foreground ml-2">• alates {stage.arrivalDate}</span>
+                )}
               </div>
-              <span className="text-xs text-muted-foreground max-w-[140px] text-right">
-                {stage.priceInfo}
-              </span>
             </div>
           </div>
         )}
