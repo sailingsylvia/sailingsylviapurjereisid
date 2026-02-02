@@ -278,6 +278,30 @@ const AboutSection = () => {
             </div>
           </div>
         </motion.div>
+
+        {/* Important notices */}
+        <motion.div
+          className="mt-8 bg-destructive/5 rounded-2xl p-8 md:p-12 border border-destructive/20"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <span className="text-2xl">⚠️</span>
+            <h3 className="font-display text-2xl text-foreground">Oluline lisainfo</h3>
+          </div>
+          <ul className="space-y-4 text-muted-foreground">
+            <li className="flex items-start gap-3">
+              <span className="text-destructive mt-1 font-bold">!</span>
+              <span>Vajalik merereisi kindlustus juhuks kui ilmastiku vm. põhjusel reis katkeb, s.h. tervisekindlustus</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="text-destructive mt-1 font-bold">!</span>
+              <span>Reisi poolelijätmisel reisija enda soovil reisikulusid ei tagastata</span>
+            </li>
+          </ul>
+        </motion.div>
       </div>
     </section>
   );
