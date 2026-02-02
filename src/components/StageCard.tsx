@@ -35,7 +35,7 @@ const StageCard = ({ stage, index, image }: StageCardProps) => {
           <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 to-transparent" />
           
           {/* Stage number badge */}
-          <div className="absolute top-4 left-4 w-12 h-12 rounded-full bg-ocean-gradient flex items-center justify-center">
+          <div className="absolute top-4 left-4 h-12 px-4 rounded-full bg-ocean-gradient flex items-center justify-center">
             <span className="font-display text-lg text-primary-foreground">{stage.id}</span>
           </div>
 
@@ -61,7 +61,7 @@ const StageCard = ({ stage, index, image }: StageCardProps) => {
               </span>
               <span className="flex items-center gap-1">
                 <Calendar size={14} />
-                {stage.arrivalDate}
+                {stage.duration}
               </span>
             </div>
           </div>
