@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { MapPin, Calendar, Navigation, Compass, Waves } from "lucide-react";
+import { MapPin, Calendar, Navigation, Compass, Waves, Euro } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VoyageStage } from "@/data/voyageData";
 
@@ -11,6 +11,13 @@ interface StageCardProps {
 
 const StageCard = ({ stage, index, image }: StageCardProps) => {
   const isEven = index % 2 === 0;
+
+  const scrollToBooking = () => {
+    const element = document.getElementById("broneeri");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   return (
     <motion.article
@@ -70,6 +77,24 @@ const StageCard = ({ stage, index, image }: StageCardProps) => {
 
       {/* Content */}
       <div className="lg:w-1/2 px-4 lg:px-8">
+        {/* Price display */}
+        <div className="mb-6 p-4 bg-secondary rounded-xl border border-border">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-sm text-muted-foreground">Hind alates</span>
+              <div className="flex items-center gap-1">
+                <span className="font-display text-3xl text-gold">{stage.price}</span>
+                <Euro size={24} className="text-gold" />
+              </div>
+            </div>
+            {stage.priceInfo && (
+              <span className="text-xs text-muted-foreground max-w-[120px] text-right">
+                {stage.priceInfo}
+              </span>
+            )}
+          </div>
+        </div>
+
         <p className="text-muted-foreground leading-relaxed mb-6">
           {stage.description}
         </p>
@@ -110,7 +135,7 @@ const StageCard = ({ stage, index, image }: StageCardProps) => {
           </div>
         </div>
 
-        <Button variant="hero" size="lg">
+        <Button variant="hero" size="lg" onClick={scrollToBooking}>
           Broneeri see etapp
         </Button>
       </div>
