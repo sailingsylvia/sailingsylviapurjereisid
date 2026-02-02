@@ -66,7 +66,7 @@ const AboutSection = () => {
               Laevas on kolm kahekohalist kajutit, avar salong, täisvarustuses köök (meresõitjate keeles kambüüs) ja kaks WC-d/dušširuumi. Välistekk on piisavalt avar, et seal kogu meeskonnaga päevitada.
             </p>
             <p className="text-muted-foreground mb-8 leading-relaxed">
-              Sylvia on turvaline, merekindel ja hea varustusega avamerejaht, mis võimaldab nii mugavat meresõitu kui sportlikku mõõduvõtmist, mille tunnistuseks on arvukad legendaarse <strong className="text-foreground">Muhu Väina regati võidud</strong>.
+              Sylvia on turvaline, merekindel ja hea varustusega avamerejaht, mis võimaldab nii mugavat meresõitu kui sportlikku mõõduvõtmist.
             </p>
 
             {/* Yacht specs */}
@@ -129,14 +129,10 @@ const AboutSection = () => {
             </p>
 
             {/* Captain achievements */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="text-center p-4 bg-secondary rounded-xl">
                 <div className="text-2xl font-display text-gold mb-1">60+</div>
                 <div className="text-xs text-muted-foreground uppercase tracking-wider">Aastat merel</div>
-              </div>
-              <div className="text-center p-4 bg-secondary rounded-xl">
-                <div className="text-2xl font-display text-gold mb-1">42</div>
-                <div className="text-xs text-muted-foreground uppercase tracking-wider">Muhu Väinat</div>
               </div>
               <div className="text-center p-4 bg-secondary rounded-xl">
                 <div className="text-2xl font-display text-gold mb-1">20+</div>

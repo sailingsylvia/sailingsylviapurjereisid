@@ -13,7 +13,7 @@ const Footer = () => {
             </div>
             <p className="text-primary-foreground/70 leading-relaxed">
               Purjereisid Euroopa kauneimates sadamates. 
-              Liitu meiega 2025. aasta suurimal purjeseiklusel!
+              Liitu meiega 2026/2027 aasta suurimal purjeseiklusel!
             </p>
           </div>
 
@@ -22,9 +22,9 @@ const Footer = () => {
             <h4 className="font-display text-lg mb-4">Kiirlingid</h4>
             <ul className="space-y-2 text-primary-foreground/70">
               <li><a href="#marsruut" className="hover:text-gold transition-colors">Marsruut</a></li>
+              <li><a href="#meist" className="hover:text-gold transition-colors">Meist</a></li>
               <li><a href="#etapid" className="hover:text-gold transition-colors">Etapid</a></li>
               <li><a href="#broneeri" className="hover:text-gold transition-colors">Broneeri</a></li>
-              <li><a href="#kontakt" className="hover:text-gold transition-colors">Kontakt</a></li>
             </ul>
           </div>
 
@@ -57,7 +57,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-primary-foreground/20 mt-12 pt-8 text-center text-primary-foreground/50 text-sm">
-          © 2025 Purjejht Sylvia. Kõik õigused kaitstud.
+          © 2026 Purjejht Sylvia. Kõik õigused kaitstud.
         </div>
       </div>
     </footer>

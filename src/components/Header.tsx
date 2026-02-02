@@ -17,6 +17,7 @@ const Header = () => {
 
   const navLinks = [
     { href: "#marsruut", label: "Marsruut" },
+    { href: "#meist", label: "Meist" },
     { href: "#etapid", label: "Etapid" },
     { href: "#broneeri", label: "Broneeri" },
   ];
