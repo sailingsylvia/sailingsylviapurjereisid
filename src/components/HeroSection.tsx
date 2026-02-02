@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Anchor, Compass, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { totalDistanceSection1 } from "@/data/voyageData";
-import heroYacht from "@/assets/hero-yacht.jpg";
+import heroYacht from "@/assets/sylvia-racing-3.jpg";
 
 const HeroSection = () => {
   return (
