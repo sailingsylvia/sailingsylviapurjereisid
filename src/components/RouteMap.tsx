@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
-import { voyageStages } from "@/data/voyageData";
+import { voyageSections, totalDistanceSection1 } from "@/data/voyageData";
 import { MapPin, Navigation } from "lucide-react";
 
 const RouteMap = () => {
+  const mainStages = voyageSections[0].stages;
+
   return (
     <section className="py-20 bg-secondary" id="marsruut">
       <div className="container mx-auto px-4">
@@ -17,11 +19,10 @@ const RouteMap = () => {
             Meie teekond
           </span>
           <h2 className="font-display text-4xl md:text-5xl text-foreground mb-4">
-            Marsruut 2025
+            Marsruut 2026/2027
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Tallinnast Tenerifeni läbi 15 unustamatu sihtkoha. 
-            Iga peatuskoht pakub ainulaadseid elamusi ja avastusi.
+            Roomassaarest Korfuni läbi {mainStages.length} sihtkoha – kokku üle {totalDistanceSection1.toLocaleString()} meremiili.
           </p>
         </motion.div>
 
@@ -35,7 +36,7 @@ const RouteMap = () => {
 
             {/* Route points */}
             <div className="relative flex justify-between items-center">
-              {voyageStages.map((stage, index) => (
+              {mainStages.map((stage, index) => (
                 <motion.div
                   key={stage.id}
                   className="relative flex flex-col items-center"
@@ -50,7 +51,7 @@ const RouteMap = () => {
                       className={`absolute ${index % 2 === 0 ? '-top-16' : 'top-20'} left-1/2 -translate-x-1/2 whitespace-nowrap`}
                     >
                       <span className="text-xs font-medium text-ocean-medium bg-card px-2 py-1 rounded-full shadow-soft">
-                        {stage.distanceFromPrevious} miili
+                        {stage.distanceFromPrevious} nm
                       </span>
                     </div>
                   )}
@@ -60,7 +61,7 @@ const RouteMap = () => {
                     className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center shadow-card cursor-pointer transition-all duration-300 hover:scale-110 ${
                       index === 0 
                         ? 'bg-ocean-deep' 
-                        : index === voyageStages.length - 1 
+                        : index === mainStages.length - 1 
                         ? 'bg-gold' 
                         : 'bg-ocean-light'
                     }`}
@@ -77,7 +78,7 @@ const RouteMap = () => {
                       {stage.city}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {stage.arrivalDate}
+                      {stage.duration}
                     </div>
                   </div>
                 </motion.div>
@@ -90,7 +91,7 @@ const RouteMap = () => {
         <div className="flex justify-center gap-8 mt-8">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full bg-ocean-deep" />
-            <span className="text-sm text-muted-foreground">Start (Tallinn)</span>
+            <span className="text-sm text-muted-foreground">Start (Roomassaare)</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full bg-ocean-light" />
@@ -98,7 +99,7 @@ const RouteMap = () => {
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full bg-gold" />
-            <span className="text-sm text-muted-foreground">Finiš (Tenerife)</span>
+            <span className="text-sm text-muted-foreground">Finiš (Korfu)</span>
           </div>
         </div>
       </div>

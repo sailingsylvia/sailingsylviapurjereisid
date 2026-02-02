@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Anchor, Compass, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { totalDistanceSection1 } from "@/data/voyageData";
 import heroYacht from "@/assets/hero-yacht.jpg";
 
 const HeroSection = () => {
@@ -41,7 +42,7 @@ const HeroSection = () => {
         >
           <span className="inline-flex items-center gap-2 text-gold font-medium text-sm uppercase tracking-widest mb-6">
             <Anchor size={16} />
-            Purjereisid Euroopas 2025
+            Purjereisid Euroopas 2026/2027
           </span>
         </motion.div>
 
@@ -61,7 +62,7 @@ const HeroSection = () => {
           transition={{ duration: 0.8, delay: 0.4 }}
         >
           Avasta Euroopa ilusamaid sadamaid ja rannikuid meie eksklusiivsel purjereisil. 
-          Tallinnast Tenerifeni – 15 etappi, üle 6000 meremiili seiklust.
+          Roomassaarest Korfuni ja Kreeka saarestikku – üle {totalDistanceSection1.toLocaleString()} meremiili seiklust!
         </motion.p>
 
         <motion.div
@@ -87,9 +88,9 @@ const HeroSection = () => {
           transition={{ duration: 0.8, delay: 0.8 }}
         >
           {[
-            { value: "15", label: "Sadamat" },
-            { value: "6000+", label: "Meremiili" },
-            { value: "5", label: "Kuud" },
+            { value: "17", label: "Etappi" },
+            { value: `${(totalDistanceSection1 / 1000).toFixed(1)}k+`, label: "Meremiili" },
+            { value: "2026/27", label: "Hooaeg" },
           ].map((stat, index) => (
             <div key={index} className="text-center">
               <div className="text-3xl md:text-4xl font-display text-gold mb-1">
