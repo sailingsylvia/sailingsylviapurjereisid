@@ -34,14 +34,18 @@ const InteractiveMap = () => {
     const oceanColor = "#1e3a5f";
     const accentColor = "#0891b2";
 
-    // Panes: keep blue dots above city labels; keep distance labels above everything.
+    // Panes: city labels at bottom, distance labels in middle, blue dots on top
     map.createPane("cityLabels");
     const cityLabelsPane = map.getPane("cityLabels");
-    if (cityLabelsPane) cityLabelsPane.style.zIndex = "450";
+    if (cityLabelsPane) cityLabelsPane.style.zIndex = "400";
 
     map.createPane("distanceLabels");
     const distanceLabelsPane = map.getPane("distanceLabels");
-    if (distanceLabelsPane) distanceLabelsPane.style.zIndex = "610";
+    if (distanceLabelsPane) distanceLabelsPane.style.zIndex = "450";
+
+    map.createPane("markers");
+    const markersPane = map.getPane("markers");
+    if (markersPane) markersPane.style.zIndex = "500";
 
     // Create custom marker icons - no "finish" distinction anymore
     const createMarkerIcon = (isStart: boolean) => {
@@ -144,7 +148,8 @@ const InteractiveMap = () => {
       const placed: Rect[] = [];
 
       // Avoid covering other stage dots and distance labels.
-      const markerHitPad = 18;
+      // Larger hit padding ensures blue dots stay visible
+      const markerHitPad = 28;
       const markerRects: Rect[] = mainStages.map((s) => {
         const p = map.latLngToContainerPoint([s.coordinates.lat, s.coordinates.lng]);
         return {
@@ -155,14 +160,16 @@ const InteractiveMap = () => {
         };
       });
 
+      // Distance labels with extra padding to keep them visible
+      const distancePad = 6;
       const distanceRects: Rect[] = distanceLabelLatLngs.map(([lat, lng]) => {
         const p = map.latLngToContainerPoint([lat, lng]);
-        // distance label iconSize: 45x18, iconAnchor: 22x9
+        // distance label iconSize: 45x18, iconAnchor: 22x9, with extra padding
         return {
-          left: p.x - 22,
-          top: p.y - 9,
-          right: p.x - 22 + 45,
-          bottom: p.y - 9 + 18,
+          left: p.x - 22 - distancePad,
+          top: p.y - 9 - distancePad,
+          right: p.x - 22 + 45 + distancePad,
+          bottom: p.y - 9 + 18 + distancePad,
         };
       });
 
@@ -431,11 +438,12 @@ const InteractiveMap = () => {
       });
     };
 
-    // Add markers (dots) for each stage
+    // Add markers (dots) for each stage - on top pane so they're always visible
     mainStages.forEach((stage, index) => {
       const isStart = index === 0;
       L.marker([stage.coordinates.lat, stage.coordinates.lng], {
         icon: createMarkerIcon(isStart),
+        pane: "markers",
       }).addTo(map);
     });
 
