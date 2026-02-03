@@ -24,14 +24,14 @@ const StageCard = ({ stage, index, image }: StageCardProps) => {
 
   return (
     <motion.article
-      className={`flex flex-col ${isEven ? 'lg:flex-row' : 'lg:flex-row-reverse'} gap-8 items-center`}
+      className={`flex flex-col ${isEven ? "lg:flex-row" : "lg:flex-row-reverse"} gap-8 items-stretch lg:items-center`}
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-100px" }}
       transition={{ duration: 0.6 }}
     >
       {/* Image */}
-      <div className="lg:w-1/2">
+      <div className="w-full lg:w-1/2">
         <motion.div
           className="relative overflow-hidden rounded-2xl shadow-elevated group"
           whileHover={{ scale: 1.02 }}
@@ -86,7 +86,7 @@ const StageCard = ({ stage, index, image }: StageCardProps) => {
       </div>
 
       {/* Content */}
-      <div className="lg:w-1/2 px-4 lg:px-8">
+      <div className="w-full lg:w-1/2 px-4 lg:px-8">
         {/* Duration and booking info - only for non-start points */}
         {showPrice && (
           <div className="mb-6 p-4 bg-secondary rounded-xl border border-border">
