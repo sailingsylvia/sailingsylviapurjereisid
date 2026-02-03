@@ -37,11 +37,13 @@ const StageCard = ({ stage, index, image }: StageCardProps) => {
           whileHover={{ scale: 1.02 }}
           transition={{ duration: 0.3 }}
         >
-          <img
-            src={image}
-            alt={`${stage.city}, ${stage.country}`}
-            className="w-full h-80 lg:h-96 object-cover transition-transform duration-700 group-hover:scale-105"
-          />
+          <div className="aspect-[16/10] w-full">
+            <img
+              src={image}
+              alt={`${stage.city}, ${stage.country}`}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+          </div>
           <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 to-transparent" />
           
           {/* Distance badge */}

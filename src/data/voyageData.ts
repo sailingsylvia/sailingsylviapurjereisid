@@ -73,7 +73,7 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Purjetamismuuseumi külastus", "Fjordi kruiis", "Saksa mereköök", "Kanaliteekonna algus"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "3. august 2026",
+        arrivalDate: "2. august 2026",
         hasSailingTraining: true,
         image: "kiel-canal"
       },
@@ -90,7 +90,7 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Altbieri proovimine", "Galeriiküla", "Reini promenaad", "Ostlemine Königs alleel"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "10. august 2026",
+        arrivalDate: "9. august 2026",
         hasSailingTraining: true,
         image: "dusseldorf-rhine"
       },
@@ -107,7 +107,7 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Mereakvaariumi külastus", "Bretagne'i köök", "Kindluse avastamine", "Ranniku matkarajad"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "23. august 2026",
+        arrivalDate: "16. august 2026",
         hasSailingTraining: true,
         image: "brest-castle"
       },
@@ -124,7 +124,7 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Delfiinide vaatamine", "Golfipartii", "Algarve köök", "Koobasretk paadiga"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "5. september 2026",
+        arrivalDate: "29. august 2026",
         hasSailingTraining: true,
         image: "vilamoura-port"
       },
@@ -141,7 +141,7 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Snorgeldamine", "Kohalik mereköök", "Jalgsimatk Cap d'Orile", "Veinidegustatsioon"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "19. september 2026",
+        arrivalDate: "11. september 2026",
         image: "moraira-beach"
       },
       {
@@ -157,7 +157,7 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Vanalinna jalutuskäik", "Loojangukruiis", "Soolajärvede külastus", "Rannapäev"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "20. september 2026",
+        arrivalDate: "25. september 2026",
         image: "ibiza-beach"
       },
       {
@@ -173,7 +173,7 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Katedraali külastus", "Mägimatk", "Oliivisaagi maitseelamus", "Rannapäev"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "21. september 2026",
+        arrivalDate: "26. september 2026",
         image: "mallorca-lagoon"
       },
       {
@@ -189,7 +189,7 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Paadireis La Maddalenale", "Nuraghe'de avastamine", "Sardiinia köök", "Snorgeldamine"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "23. september 2026",
+        arrivalDate: "27. september 2026",
         image: "sardinia-cala-luna"
       },
       {
@@ -205,7 +205,7 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Arheoloogi-retk", "Llogara rahvuspark", "Albaania köök", "Snorgeldamine"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "7. oktoober 2026",
+        arrivalDate: "29. september 2026",
         image: "orikum-marina"
       },
       {
@@ -221,7 +221,7 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Vanalinna avastamine", "Paleekülastus", "Rannakuurort", "Kreeka köök"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "10. oktoober 2026",
+        arrivalDate: "13. oktoober 2026",
         image: "corfu-agios-gordios"
       }
     ]
@@ -245,7 +245,7 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Erinevate saarte külastused", "Snorgeldamine", "Kreeka tavern'id", "Ajaloo avastamine"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "12. oktoober 2026",
+        arrivalDate: "17. oktoober 2026",
         image: "joonia-meri"
       },
       {
@@ -261,7 +261,7 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Erinevate saarte külastused", "Kreeka öised tavern'id", "Rannapäevad", "Ajaloo avastamine"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "22. oktoober 2026",
+        arrivalDate: "28. oktoober 2026",
         image: "paros-village"
       },
       {
@@ -277,7 +277,7 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Loojanguvaatlus", "Ujumine", "Kohalik vein", "Fotograafia"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "1. november 2026",
+        arrivalDate: "8. november 2026",
         image: "santorini-cyclades"
       },
       {
@@ -293,7 +293,7 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Kerge purjetamine", "Supelrannad", "Kohalik toit", "Saarte avastamine"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "11. november 2026",
+        arrivalDate: "19. november 2026",
         image: "hydra-island"
       },
       {
@@ -309,7 +309,7 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Teatrietendus", "Ajalootuurid", "Kohalikud veinimõisad", "Rannapuhkus"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "21. november 2026",
+        arrivalDate: "30. november 2026",
         image: "peloponnese-coast"
       },
       {
@@ -325,7 +325,7 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Ateena muuseumid", "Toidutuur", "Lõpupidu", "Kultuurielamused"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "1. detsember 2026",
+        arrivalDate: "11. detsember 2026",
         image: "piraeus-port"
       }
     ]
