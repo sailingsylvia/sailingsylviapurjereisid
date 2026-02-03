@@ -33,8 +33,7 @@ const BookingForm = () => {
       .filter((stage) => !stage.isStartPoint)
       .map((stage) => ({
         id: stage.id,
-        label: `${stage.city} (${stage.duration}) - ${stage.pricePerDay}€/päev`,
-        pricePerDay: stage.pricePerDay,
+        label: `${stage.city} (${stage.duration})`,
       }))
   );
 
@@ -42,10 +41,10 @@ const BookingForm = () => {
     e.preventDefault();
     
     // Basic validation
-    if (!formData.name.trim() || !formData.email.trim() || !formData.stage) {
+    if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.stage) {
       toast({
         title: "Palun täitke kohustuslikud väljad",
-        description: "Nimi, e-post ja etapi valik on kohustuslikud.",
+        description: "Nimi, e-post, telefon ja etapi valik on kohustuslikud.",
         variant: "destructive",
       });
       return;
@@ -182,12 +181,12 @@ const BookingForm = () => {
           <div className="grid md:grid-cols-2 gap-6 mb-6">
             <div className="space-y-2">
               <Label htmlFor="phone" className="text-foreground">
-                Telefon
+                Telefon *
               </Label>
               <Input
                 id="phone"
                 type="tel"
-                placeholder="+372 5XX XXXX"
+                placeholder="+372 5XXX XXXX"
                 value={formData.phone}
                 onChange={(e) =>
                   setFormData({ ...formData, phone: e.target.value })
@@ -229,7 +228,6 @@ const BookingForm = () => {
                 <SelectValue placeholder="Vali soovitud etapp..." />
               </SelectTrigger>
               <SelectContent className="bg-card z-50 max-h-[300px]">
-                <SelectItem value="info">Soovin üldist infot</SelectItem>
                 {allStages.map((stage) => (
                   <SelectItem key={stage.id} value={stage.id}>
                     {stage.label}

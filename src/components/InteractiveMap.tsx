@@ -35,9 +35,9 @@ const InteractiveMap = () => {
     const oceanColor = "#1e3a5f";
     const accentColor = "#0891b2";
 
-    // Create custom marker icons
-    const createMarkerIcon = (isStart: boolean, isEnd: boolean) => {
-      const color = isStart ? oceanColor : isEnd ? goldColor : accentColor;
+    // Create custom marker icons - no "finish" distinction anymore
+    const createMarkerIcon = (isStart: boolean) => {
+      const color = isStart ? oceanColor : accentColor;
       return L.divIcon({
         className: "custom-marker",
         html: `
@@ -112,27 +112,26 @@ const InteractiveMap = () => {
 
     // Position offsets for each city to avoid overlapping labels
     const labelPositions: Record<string, { anchorX: number; anchorY: number }> = {
-      "Roomassaare": { anchorX: -10, anchorY: -35 },
-      "Kiel": { anchorX: -80, anchorY: 5 },
-      "Düsseldorf": { anchorX: -85, anchorY: -25 },
-      "Brest": { anchorX: -10, anchorY: 25 },
-      "Vilamoura": { anchorX: -85, anchorY: 5 },
-      "Moraira": { anchorX: -10, anchorY: -35 },
-      "Ibiza": { anchorX: -10, anchorY: 25 },
-      "Mallorca": { anchorX: -10, anchorY: -35 },
-      "Sardiinia": { anchorX: -10, anchorY: -35 },
-      "Orikum": { anchorX: -85, anchorY: -5 },
-      "Korfu": { anchorX: -10, anchorY: 25 },
+      "Roomassaare": { anchorX: 20, anchorY: 5 },
+      "Kiel": { anchorX: -95, anchorY: 5 },
+      "Düsseldorf": { anchorX: -100, anchorY: 5 },
+      "Brest": { anchorX: 20, anchorY: 5 },
+      "Vilamoura": { anchorX: -95, anchorY: 5 },
+      "Moraira": { anchorX: 20, anchorY: -35 },
+      "Ibiza": { anchorX: 20, anchorY: 30 },
+      "Mallorca": { anchorX: 20, anchorY: -35 },
+      "Sardiinia": { anchorX: 20, anchorY: -35 },
+      "Orikum": { anchorX: -95, anchorY: 10 },
+      "Korfu": { anchorX: 20, anchorY: 5 },
     };
 
     // Add markers and labels for each stage
     mainStages.forEach((stage, index) => {
       const isStart = index === 0;
-      const isEnd = index === mainStages.length - 1;
 
       // Add marker
       L.marker([stage.coordinates.lat, stage.coordinates.lng], {
-        icon: createMarkerIcon(isStart, isEnd),
+        icon: createMarkerIcon(isStart),
       }).addTo(map);
 
       // Get custom position or use default
@@ -151,7 +150,7 @@ const InteractiveMap = () => {
             color: ${oceanColor};
             white-space: nowrap;
             box-shadow: 0 1px 4px rgba(0,0,0,0.12);
-            border-left: 2px solid ${isStart ? oceanColor : isEnd ? goldColor : accentColor};
+            border-left: 2px solid ${isStart ? oceanColor : accentColor};
             text-align: left;
           ">
             <div style="font-weight: 700; font-size: 10px;">${stage.city}</div>
@@ -197,7 +196,7 @@ const InteractiveMap = () => {
             Marsruut 2026/2027
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Roomassaarest Korfuni läbi {mainStages.length} sihtkoha – kokku üle{" "}
+            Roomassaarest Korfuni läbi 11+ sihtkoha – kokku üle{" "}
             {totalDistanceSection1.toLocaleString()} meremiili.
           </p>
         </motion.div>
@@ -226,10 +225,6 @@ const InteractiveMap = () => {
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full bg-ocean-light border-2 border-white shadow-sm" />
             <span className="text-sm text-muted-foreground">Peatused</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-gold border-2 border-white shadow-sm" />
-            <span className="text-sm text-muted-foreground">Finiš (Korfu)</span>
           </div>
         </div>
       </div>

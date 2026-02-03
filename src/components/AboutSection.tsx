@@ -6,6 +6,7 @@ import sylviaSailing1 from "@/assets/sylvia-sailing-1.jpeg";
 import sylviaRacing2 from "@/assets/sylvia-racing-2.jpg";
 import sylviaRacing3 from "@/assets/sylvia-racing-3.jpg";
 import sylviaCrew2 from "@/assets/sylvia-crew-2.jpg";
+import captainAare from "@/assets/captain-aare.png";
 
 const AboutSection = () => {
   return (
@@ -60,10 +61,10 @@ const AboutSection = () => {
               Jaht Sylvia
             </h3>
             <p className="text-muted-foreground mb-6 leading-relaxed">
-              Ruumikas ja mugav <strong className="text-foreground">Grand Soleil 43</strong> pakub mugavat äraolemist 7+2 reisijale koos magamiskohtadega (kambüüsi mahub magama 2 ja vöörikajutisse 3) ja kuni 10 reisijale lühemateks meresõitudeks.
+              Ruumikas ja mugav <strong className="text-foreground">Grand Soleil 43</strong> pakub mugavat äraolemist 7+2 reisijale koos magamiskohtadega (kajutites 7 ja kambüüsis 2 magamiskohta).
             </p>
             <p className="text-muted-foreground mb-6 leading-relaxed">
-              Laevas on kolm kahekohalist kajutit, avar salong, täisvarustuses köök (meresõitjate keeles kambüüs) ja kaks WC-d/dušširuumi. Välistekk on piisavalt avar, et seal kogu meeskonnaga päevitada.
+              Laevas on üks kolmekohaline ja kaks kahekohalist kajutit, avar salong, täisvarustuses köök (meresõitjate keeles kambüüs) ja kaks WC-d/dušširuumi. Välistekk on piisavalt avar, et seal kogu meeskonnaga päevitada.
             </p>
             <p className="text-muted-foreground mb-8 leading-relaxed">
               Sylvia on turvaline, merekindel ja hea varustusega avamerejaht, mis võimaldab nii mugavat meresõitu kui sportlikku mõõduvõtmist.
@@ -98,8 +99,8 @@ const AboutSection = () => {
           >
             <div className="relative">
               <img
-                src={sylviaCrew2}
-                alt="Kapten Aare Kööp meeskonnaga"
+                src={captainAare}
+                alt="Kapten Aare Kööp"
                 className="w-full h-[400px] object-cover rounded-2xl shadow-card"
               />
               <div className="absolute -bottom-6 -left-6 bg-gold text-foreground p-4 rounded-xl shadow-lg">
@@ -175,7 +176,7 @@ const AboutSection = () => {
             </div>
             <div className="relative group overflow-hidden rounded-xl md:col-span-1">
               <img
-                src={sylviaSailing1}
+                src={sylviaCrew2}
                 alt="Meeskond pardal"
                 className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
               />
@@ -255,7 +256,7 @@ const AboutSection = () => {
               <ul className="space-y-3 text-muted-foreground">
                 <li className="flex items-start gap-2">
                   <span className="text-ocean-medium mt-1">✓</span>
-                  Padjad-tekid, voodipesu, käterätik
+                  Padjad-tekid, voodipesu, käterätikud
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-ocean-medium mt-1">✓</span>
