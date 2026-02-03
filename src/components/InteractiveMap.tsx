@@ -8,8 +8,6 @@ import "leaflet/dist/leaflet.css";
 const InteractiveMap = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const cityLabelMarkersRef = useRef<L.Marker[]>([]);
-  const stageMarkersRef = useRef<L.Marker[]>([]);
   const mainStages = voyageSections[0].stages;
 
   useEffect(() => {
@@ -32,591 +30,165 @@ const InteractiveMap = () => {
       maxZoom: 19,
     }).addTo(map);
 
-    const oceanColor = "#1e3a5f";
-    const accentColor = "#0891b2";
+    const markerColor = "#2196F3"; // Bright blue like reference image
+    const labelBgColor = "#2d3748"; // Dark gray/charcoal for labels
 
-    // Panes: city labels at bottom, distance labels in middle, blue dots on top
-    map.createPane("cityLabels");
-    const cityLabelsPane = map.getPane("cityLabels");
-    if (cityLabelsPane) cityLabelsPane.style.zIndex = "400";
+    // Panes: route at bottom, distance labels middle, city labels above, blue pins on top
+    map.createPane("routeLine");
+    const routePane = map.getPane("routeLine");
+    if (routePane) routePane.style.zIndex = "350";
 
     map.createPane("distanceLabels");
     const distanceLabelsPane = map.getPane("distanceLabels");
-    if (distanceLabelsPane) distanceLabelsPane.style.zIndex = "450";
+    if (distanceLabelsPane) distanceLabelsPane.style.zIndex = "400";
+
+    map.createPane("cityLabels");
+    const cityLabelsPane = map.getPane("cityLabels");
+    if (cityLabelsPane) cityLabelsPane.style.zIndex = "450";
 
     map.createPane("markers");
     const markersPane = map.getPane("markers");
     if (markersPane) markersPane.style.zIndex = "500";
 
-    // Create custom marker icons - no "finish" distinction anymore
-    const createMarkerIcon = (isStart: boolean) => {
-      const color = isStart ? oceanColor : accentColor;
+    // Create custom pin marker icon (like reference image - teardrop/pin shape)
+    const createPinIcon = (isStart: boolean) => {
+      const size = isStart ? 36 : 28;
+      const innerSize = isStart ? 14 : 10;
       return L.divIcon({
-        className: "custom-marker",
+        className: "custom-pin-marker",
         html: `
           <div style="
-            width: 28px;
-            height: 28px;
-            background: ${color};
-            border: 3px solid white;
-            border-radius: 50%;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-          "></div>
+            position: relative;
+            width: ${size}px;
+            height: ${size + 8}px;
+          ">
+            <svg width="${size}" height="${size + 8}" viewBox="0 0 ${size} ${size + 8}" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M${size / 2} ${size + 6} C${size / 2} ${size + 6} ${size - 2} ${size * 0.55} ${size - 2} ${size / 2.2} C${size - 2} ${size / 5} ${size * 0.78} 2 ${size / 2} 2 C${size * 0.22} 2 2 ${size / 5} 2 ${size / 2.2} C2 ${size * 0.55} ${size / 2} ${size + 6} ${size / 2} ${size + 6} Z" fill="${markerColor}" stroke="white" stroke-width="2"/>
+              <circle cx="${size / 2}" cy="${size / 2.2}" r="${innerSize / 2}" fill="white"/>
+            </svg>
+          </div>
         `,
-        iconSize: [28, 28],
-        iconAnchor: [14, 14],
+        iconSize: [size, size + 8],
+        iconAnchor: [size / 2, size + 6], // Bottom tip of pin
       });
     };
 
-    // Add route line
+    // Add route line (dashed)
     const routeCoordinates = mainStages.map((stage) => [
       stage.coordinates.lat,
       stage.coordinates.lng,
     ] as [number, number]);
 
     L.polyline(routeCoordinates, {
-      color: accentColor,
-      weight: 3,
-      opacity: 0.8,
-      dashArray: "10, 8",
+      color: markerColor,
+      weight: 2,
+      opacity: 0.7,
+      dashArray: "8, 6",
+      pane: "routeLine",
     }).addTo(map);
 
-    // Distance labels (meremiilid) are implemented as markers that we can reposition
-    // on zoom/move so they don't hide behind dots or drift out of bounds.
-    const distanceLabelLatLngs: Array<[number, number]> = [];
-    const distanceLabelSegments: Array<{ marker: L.Marker; toIndex: number }> = [];
+    // Add stage markers (pins)
+    mainStages.forEach((stage, index) => {
+      const isStart = index === 0;
+      L.marker([stage.coordinates.lat, stage.coordinates.lng], {
+        icon: createPinIcon(isStart),
+        pane: "markers",
+      }).addTo(map);
+    });
 
+    // Add city labels DIRECTLY BELOW each pin (like reference image)
+    mainStages.forEach((stage, index) => {
+      const isStart = index === 0;
+      const pinHeight = isStart ? 44 : 36; // Pin SVG height
+      
+      // Create label HTML matching reference image style
+      const labelHtml = `
+        <div style="
+          background: ${labelBgColor};
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 11px;
+          font-weight: 600;
+          color: white;
+          white-space: nowrap;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+          text-align: center;
+          display: inline-block;
+        ">
+          <div style="font-weight: 700; font-size: 11px;">
+            ${stage.city} <span style="color: #94a3b8; font-weight: 400; font-size: 9px;">(${stage.countryCode})</span>
+          </div>
+          ${stage.arrivalDate ? `<div style="font-size: 9px; color: #cbd5e1; font-weight: 400; margin-top: 1px;">${stage.arrivalDate}</div>` : ""}
+        </div>
+      `;
+
+      const labelIcon = L.divIcon({
+        className: "city-label-below",
+        html: labelHtml,
+        iconSize: [0, 0], // Auto-size
+        iconAnchor: [0, -pinHeight + 10], // Position below pin (anchor at top-center of label)
+      });
+
+      L.marker([stage.coordinates.lat, stage.coordinates.lng], {
+        icon: labelIcon,
+        interactive: false,
+        pane: "cityLabels",
+      }).addTo(map);
+    });
+
+    // Add distance labels ON the route segments (like reference image)
     for (let i = 1; i < mainStages.length; i++) {
       const stage = mainStages[i];
       const prevStage = mainStages[i - 1];
 
       if (stage.distanceFromPrevious) {
+        // Calculate midpoint of segment
         const midLat = (stage.coordinates.lat + prevStage.coordinates.lat) / 2;
         const midLng = (stage.coordinates.lng + prevStage.coordinates.lng) / 2;
 
+        // Calculate angle of segment for rotation
+        const dx = stage.coordinates.lng - prevStage.coordinates.lng;
+        const dy = stage.coordinates.lat - prevStage.coordinates.lat;
+        let angle = Math.atan2(-dx, dy) * (180 / Math.PI); // Convert to degrees
+        
+        // Keep text readable (not upside down)
+        if (angle > 90) angle -= 180;
+        if (angle < -90) angle += 180;
+
         const distanceIcon = L.divIcon({
-          className: "distance-label",
+          className: "distance-label-rotated",
           html: `
             <div style="
-              background: rgba(255,255,255,0.95);
-              padding: 2px 5px;
-              border-radius: 8px;
+              background: ${markerColor};
+              padding: 3px 8px;
+              border-radius: 10px;
               font-size: 9px;
               font-weight: 600;
-              color: ${accentColor};
+              color: white;
               white-space: nowrap;
-              box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-              border: 1px solid ${accentColor};
-            ">${stage.distanceFromPrevious} nm</div>
+              box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+              transform: rotate(${angle}deg);
+              transform-origin: center center;
+            ">${stage.distanceFromPrevious} miili</div>
           `,
-          iconSize: [45, 18],
-          iconAnchor: [22, 9],
+          iconSize: [60, 20],
+          iconAnchor: [30, 10],
         });
 
-        const marker = L.marker([midLat, midLng], {
+        L.marker([midLat, midLng], {
           icon: distanceIcon,
           interactive: false,
           pane: "distanceLabels",
         }).addTo(map);
-
-        distanceLabelSegments.push({ marker, toIndex: i });
       }
     }
 
-    const clearCityLabels = () => {
-      cityLabelMarkersRef.current.forEach((m) => m.remove());
-      cityLabelMarkersRef.current = [];
-    };
-
-    type Rect = { left: number; top: number; right: number; bottom: number };
-    const overlapArea = (a: Rect, b: Rect) => {
-      const x = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
-      const y = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
-      return x * y;
-    };
-
-    const computeSpiderfiedStagePoints = () => {
-      const basePoints = mainStages.map((s) =>
-        map.latLngToContainerPoint([s.coordinates.lat, s.coordinates.lng])
-      );
-
-      // Marker icon is 28x28 => use slightly bigger separation to avoid stacking.
-      const minDist = 36;
-      const placed: L.Point[] = [];
-      const result: L.Point[] = [];
-
-      const isFarEnough = (p: L.Point) => placed.every((q) => q.distanceTo(p) >= minDist);
-
-      const spiralFind = (p: L.Point) => {
-        // Deterministic spiral so it doesn't jitter on re-render.
-        for (let step = 0; step < 48; step++) {
-          const angle = step * 0.85;
-          const r = 6 + step * 3;
-          const cand = L.point(p.x + Math.cos(angle) * r, p.y + Math.sin(angle) * r);
-          if (isFarEnough(cand)) return cand;
-        }
-        return p;
-      };
-
-      for (const p of basePoints) {
-        const candidate = isFarEnough(p) ? p : spiralFind(p);
-        placed.push(candidate);
-        result.push(candidate);
-      }
-
-      return result;
-    };
-
-    const updateStageMarkers = () => {
-      const displayPoints = computeSpiderfiedStagePoints();
-      const displayLatLngs = displayPoints.map((p) => map.containerPointToLatLng(p));
-      stageMarkersRef.current.forEach((m, i) => m.setLatLng(displayLatLngs[i]));
-      return { displayPoints, displayLatLngs };
-    };
-
-    const updateDistanceLabels = (displayPoints: L.Point[]) => {
-      distanceLabelLatLngs.length = 0;
-
-      const zoom = map.getZoom();
-      const size = map.getSize();
-      const padding = 12;
-
-      // Distance label icon sizing (must match the divIcon above)
-      const labelW = 45;
-      const labelH = 18;
-      const anchorX = 22;
-      const anchorY = 9;
-
-      const placed: L.Point[] = [];
-      const dotAvoidDist = 38;
-      const labelAvoidDist = 34;
-
-      // Clamp the *anchor point* so the whole label stays visible inside the map.
-      const clampPoint = (p: L.Point) => {
-        const minX = padding + anchorX;
-        const maxX = size.x - padding - (labelW - anchorX);
-        const minY = padding + anchorY;
-        const maxY = size.y - padding - (labelH - anchorY);
-        return L.point(
-          Math.min(maxX, Math.max(minX, p.x)),
-          Math.min(maxY, Math.max(minY, p.y))
-        );
-      };
-
-      // Keep labels very close to the dotted line (pixel-based), only nudge when needed.
-      const perpBasePx = zoom <= 4 ? 12 : zoom === 5 ? 10 : 8;
-
-      for (const seg of distanceLabelSegments) {
-        const i = seg.toIndex;
-        const a = mainStages[i - 1];
-        const b = mainStages[i];
-
-        const p1 = map.latLngToContainerPoint([a.coordinates.lat, a.coordinates.lng]);
-        const p2 = map.latLngToContainerPoint([b.coordinates.lat, b.coordinates.lng]);
-        const dx = p2.x - p1.x;
-        const dy = p2.y - p1.y;
-        const len = Math.hypot(dx, dy) || 1;
-        const tx = dx / len;
-        const ty = dy / len;
-        // Perpendicular unit vector
-        const nx = ty;
-        const ny = -tx;
-
-        // Candidates are primarily ON the segment (varying t), with minimal perpendicular nudges.
-        const ts = [0.5, 0.42, 0.58, 0.34, 0.66, 0.26, 0.74];
-        const perps = [
-          0,
-          perpBasePx,
-          -perpBasePx,
-          perpBasePx * 1.8,
-          -perpBasePx * 1.8,
-        ];
-
-        let best = clampPoint(L.point(p1.x + dx * 0.5, p1.y + dy * 0.5));
-        let bestPenalty = Number.POSITIVE_INFINITY;
-
-        for (const t of ts) {
-          const onLine = L.point(p1.x + dx * t, p1.y + dy * t);
-          for (const perp of perps) {
-            const raw = L.point(onLine.x + nx * perp, onLine.y + ny * perp);
-            const cand = clampPoint(raw);
-
-            let penalty = 0;
-
-            // Hard avoid dots and other distance labels.
-            for (const dp of displayPoints) {
-              const d = dp.distanceTo(cand);
-              if (d < dotAvoidDist) penalty += 1_000_000 + (dotAvoidDist - d) * 10_000;
-            }
-            for (const pp of placed) {
-              const d = pp.distanceTo(cand);
-              if (d < labelAvoidDist) penalty += 800_000 + (labelAvoidDist - d) * 9_000;
-            }
-
-            // Prefer to keep it exactly on the segment (perp=0) and near mid (t≈0.5)
-            penalty += Math.abs(perp) * 40;
-            penalty += Math.abs(t - 0.5) * 250;
-
-            if (penalty < bestPenalty) {
-              bestPenalty = penalty;
-              best = cand;
-            }
-          }
-        }
-
-        placed.push(best);
-        const latLng = map.containerPointToLatLng(best);
-        distanceLabelLatLngs.push([latLng.lat, latLng.lng]);
-        seg.marker.setLatLng(latLng);
-      }
-    };
-
-    const renderCityLabels = (displayPoints: L.Point[], displayLatLngs: L.LatLng[]) => {
-      clearCityLabels();
-
-      const size = map.getSize();
-      const padding = 10;
-      const placed: Rect[] = [];
-
-      // Avoid covering other stage dots and distance labels.
-      // Larger hit padding ensures blue dots stay visible
-      const markerHitPad = 28;
-      const markerRects: Rect[] = displayPoints.map((p) => {
-        return {
-          left: p.x - markerHitPad,
-          top: p.y - markerHitPad,
-          right: p.x + markerHitPad,
-          bottom: p.y + markerHitPad,
-        };
-      });
-
-      // Distance labels with extra padding to keep them visible
-      const distancePad = 6;
-      const distanceRects: Rect[] = distanceLabelLatLngs.map(([lat, lng]) => {
-        const p = map.latLngToContainerPoint([lat, lng]);
-        // distance label iconSize: 45x18, iconAnchor: 22x9, with extra padding
-        return {
-          left: p.x - 22 - distancePad,
-          top: p.y - 9 - distancePad,
-          right: p.x - 22 + 45 + distancePad,
-          bottom: p.y - 9 + 18 + distancePad,
-        };
-      });
-
-      // Treat the dashed route polyline as an obstacle so labels don't sit on it.
-      // We sample a few points along each segment (incl. near endpoints) and build small keepout rects.
-      const routeLinePad = 10;
-      const routeLineRects: Rect[] = [];
-      const sampleTs = [0.15, 0.35, 0.65, 0.85];
-      for (let i = 1; i < mainStages.length; i++) {
-        const a = mainStages[i - 1];
-        const b = mainStages[i];
-        const p1 = map.latLngToContainerPoint([a.coordinates.lat, a.coordinates.lng]);
-        const p2 = map.latLngToContainerPoint([b.coordinates.lat, b.coordinates.lng]);
-
-        for (const t of sampleTs) {
-          const x = p1.x + (p2.x - p1.x) * t;
-          const y = p1.y + (p2.y - p1.y) * t;
-          routeLineRects.push({
-            left: x - routeLinePad,
-            top: y - routeLinePad,
-            right: x + routeLinePad,
-            bottom: y + routeLinePad,
-          });
-        }
-      }
-
-      // Place bigger labels first to reduce collisions.
-      const stagesToPlace = mainStages
-        .map((stage, index) => ({ stage, index }))
-        .sort((a, b) => {
-          const wa = Math.min(160, Math.max(112, a.stage.city.length * 8 + 32));
-          const wb = Math.min(160, Math.max(112, b.stage.city.length * 8 + 32));
-          return wb - wa;
-        });
-
-      const clampCandidate = (
-        point: L.Point,
-        dx: number,
-        dy: number,
-        w: number,
-        h: number
-      ) => {
-        let left = point.x + dx;
-        let top = point.y + dy;
-        let right = left + w;
-        let bottom = top + h;
-
-        if (left < padding) {
-          dx += padding - left;
-          left = padding;
-          right = left + w;
-        }
-        if (top < padding) {
-          dy += padding - top;
-          top = padding;
-          bottom = top + h;
-        }
-        if (right > size.x - padding) {
-          dx -= right - (size.x - padding);
-          right = size.x - padding;
-          left = right - w;
-        }
-        if (bottom > size.y - padding) {
-          dy -= bottom - (size.y - padding);
-          bottom = size.y - padding;
-          top = bottom - h;
-        }
-
-        const rect: Rect = { left, top, right, bottom };
-        return { dx, dy, rect };
-      };
-
-      // Fixed label position offsets (city id -> fixed pixel offset from dot)
-      // These bypass the automatic placement algorithm entirely
-      const fixedOffsets: Record<string, { dx: number; dy: number }> = {
-        brest: { dx: -95, dy: -50 }, // fixed: left-top (toward Ireland, in the ocean)
-      };
-
-      // Manual label position overrides (city id -> preferred direction: x/y like dirs)
-      // Values are direction vectors - larger absolute values push label further in that direction
-      const manualOffsets: Record<string, { x: number; y: number }> = {
-        vilamoura: { x: -1, y: 1 }, // left-bottom (ocean/Atlantic side)
-        kiel: { x: 1, y: -1 }, // up-right
-        dusseldorf: { x: 1, y: -1 }, // up-right
-        moraira: { x: 1, y: -1 }, // up-right (away from coast)
-        mallorca: { x: 1, y: 1 }, // down-right (away from Ibiza)
-        ibiza: { x: -1, y: -1 }, // up-left (opposite of Mallorca)
-        sardinia: { x: 1, y: -1 }, // up-right
-        orikum: { x: 1, y: 1 }, // down-right
-        corfu: { x: -1, y: -1 }, // up-left
-      };
-
-      // Cities that should have labels placed closer to their dots
-      const preferCloseCities = new Set([
-        "kiel", "dusseldorf", "moraira", "vilamoura", "mallorca", "ibiza", "sardinia", "orikum", "corfu"
-      ]);
-
-      stagesToPlace.forEach(({ stage, index }) => {
-        const isStart = index === 0;
-        const hasDate = Boolean(stage.arrivalDate);
-
-        // Slightly adaptive sizing reduces overlap without making labels tiny.
-        const labelW = Math.min(160, Math.max(112, stage.city.length * 8 + 32));
-        const labelH = hasDate ? 44 : 28;
-
-        const point = displayPoints[index];
-
-        // Check if this city has a fixed offset (bypasses automatic placement)
-        const fixedOffset = fixedOffsets[stage.id];
-        let best: { dx: number; dy: number };
-        let bestRect: Rect | null = null;
-
-        if (fixedOffset) {
-          // Use fixed offset, but still clamp to viewport.
-          const clamped = clampCandidate(point, fixedOffset.dx, fixedOffset.dy, labelW, labelH);
-          best = { dx: clamped.dx, dy: clamped.dy };
-          bestRect = clamped.rect;
-        } else {
-          // Candidate top-left offsets relative to the blue dot (in px)
-          // Use multiple rings + many directions (bigger offsets on low zoom) to avoid collisions.
-          const zoom = map.getZoom();
-          const baseDefault = zoom <= 4 ? 48 : zoom === 5 ? 38 : zoom === 6 ? 30 : 24;
-          const preferClose = preferCloseCities.has(stage.id);
-          // Only prefer "close" labels at higher zooms; at low zoom we need more room to avoid overlaps.
-          const base = preferClose && zoom >= 6 ? Math.max(22, Math.round(baseDefault * 0.7)) : baseDefault;
-
-          const radiiRaw = [
-            base,
-            Math.round(base * 1.35),
-            Math.round(base * 1.8),
-            Math.round(base * 2.4),
-            Math.round(base * 3.2),
-            Math.round(base * 4.0),
-          ];
-          const radii = radiiRaw.map((r) => Math.min(240, r));
-
-          // Check if this city has a manual preferred direction
-          const manualDir = manualOffsets[stage.id];
-
-          let dirs = [
-            { x: 1, y: -1 },
-            { x: 1, y: 1 },
-            { x: -1, y: -1 },
-            { x: -1, y: 1 },
-            { x: 1, y: 0 },
-            { x: -1, y: 0 },
-            { x: 0, y: -1 },
-            { x: 0, y: 1 },
-            { x: 2, y: -1 },
-            { x: 2, y: 1 },
-            { x: -2, y: -1 },
-            { x: -2, y: 1 },
-            { x: 1, y: -2 },
-            { x: 1, y: 2 },
-            { x: -1, y: -2 },
-            { x: -1, y: 2 },
-            { x: 3, y: -1 },
-            { x: 3, y: 1 },
-            { x: -3, y: -1 },
-            { x: -3, y: 1 },
-            { x: 1, y: -3 },
-            { x: 1, y: 3 },
-            { x: -1, y: -3 },
-            { x: -1, y: 3 },
-          ];
-
-          // If manual direction specified, put it first so it gets priority
-          if (manualDir) {
-            dirs = [manualDir, ...dirs.filter((d) => d.x !== manualDir.x || d.y !== manualDir.y)];
-          }
-
-          const candidates: Array<{ dx: number; dy: number }> = [];
-          for (const r of radii) {
-            for (const d of dirs) {
-              const len = Math.hypot(d.x, d.y) || 1;
-              const ux = d.x / len;
-              const uy = d.y / len;
-              const ax = ux * r;
-              const ay = uy * r;
-
-              let dx = 0;
-              let dy = 0;
-
-              // If we're roughly centered on an axis, center the label on that axis.
-              if (Math.abs(ux) < 0.2) dx = -labelW / 2;
-              else if (ux > 0) dx = ax;
-              else dx = ax - labelW;
-
-              if (Math.abs(uy) < 0.2) dy = -labelH / 2;
-              else if (uy > 0) dy = ay;
-              else dy = ay - labelH;
-
-              candidates.push({ dx, dy });
-            }
-          }
-
-          best = candidates[0];
-          let bestPenalty = Number.POSITIVE_INFINITY;
-
-          for (const c of candidates) {
-            const clamped = clampCandidate(point, c.dx, c.dy, labelW, labelH);
-            const rect = clamped.rect;
-
-            let penalty = 0;
-
-            for (const prev of placed) {
-              const area = overlapArea(rect, prev);
-              if (area > 0) penalty += area * 20 + 250000;
-            }
-
-            // Don't cover other dots.
-            for (let mi = 0; mi < markerRects.length; mi++) {
-              const area = overlapArea(rect, markerRects[mi]);
-              if (area > 0) {
-                // Never cover its own dot.
-                if (mi === index) penalty += 1_000_000;
-                else penalty += area * 18 + 90_000;
-              }
-            }
-
-            // Don't cover distance labels.
-            for (const dr of distanceRects) {
-              const area = overlapArea(rect, dr);
-              if (area > 0) penalty += area * 22 + 120000;
-            }
-
-          // Don't sit on the route polyline.
-          for (const rr of routeLineRects) {
-            const area = overlapArea(rect, rr);
-            if (area > 0) penalty += area * 10 + 90000;
-          }
-
-            // Prefer a closer label (smaller displacement)
-            penalty += Math.abs(clamped.dx) * 1.1 + Math.abs(clamped.dy) * 0.9;
-
-            if (penalty < bestPenalty) {
-              bestPenalty = penalty;
-              best = { dx: clamped.dx, dy: clamped.dy };
-              bestRect = rect;
-            }
-          }
-        }
-
-        if (bestRect) placed.push(bestRect);
-
-        const labelIcon = L.divIcon({
-          className: "city-label",
-          html: `
-            <div style="
-              width: ${labelW}px;
-              height: ${labelH}px;
-              background: rgba(255,255,255,0.95);
-              padding: 5px 8px;
-              border-radius: 6px;
-              font-size: 10px;
-              font-weight: 600;
-              color: ${oceanColor};
-              white-space: nowrap;
-              box-shadow: 0 1px 4px rgba(0,0,0,0.12);
-              border-left: 2px solid ${isStart ? oceanColor : accentColor};
-              text-align: left;
-              overflow: hidden;
-            ">
-              <div style="font-weight: 700; font-size: 10px; overflow: hidden; text-overflow: ellipsis;">${stage.city}</div>
-              ${stage.arrivalDate ? `<div style="font-size: 9px; color: #555; font-weight: 400; overflow: hidden; text-overflow: ellipsis;">${stage.arrivalDate}</div>` : ""}
-            </div>
-          `,
-          iconSize: [labelW, labelH],
-          // iconAnchor is the point (within the icon) that is placed at the marker's LatLng.
-          // We want the label top-left to be offset by (dx, dy) from the dot -> anchor = (-dx, -dy)
-          iconAnchor: [-best.dx, -best.dy],
-        });
-
-        const baseLatLng = displayLatLngs[index];
-        const labelMarker = L.marker([baseLatLng.lat, baseLatLng.lng], {
-          icon: labelIcon,
-          interactive: false,
-          pane: "cityLabels",
-        }).addTo(map);
-
-        cityLabelMarkersRef.current.push(labelMarker);
-      });
-    };
-
-    // Add stage markers (dots) – we keep references so we can "spiderfy" close ones on zoom
-    stageMarkersRef.current = [];
-    mainStages.forEach((stage, index) => {
-      const isStart = index === 0;
-      const marker = L.marker([stage.coordinates.lat, stage.coordinates.lng], {
-        icon: createMarkerIcon(isStart),
-        pane: "markers",
-      }).addTo(map);
-
-      stageMarkersRef.current.push(marker);
-    });
-
-    // Fit bounds to show all markers + keep margin for labels
+    // Fit bounds to show all markers
     const bounds = L.latLngBounds(routeCoordinates);
-    map.fitBounds(bounds, { padding: [80, 80] });
-
-    // Render everything after fitBounds (and keep non-overlapping on zoom/resize)
-    const rerenderAll = () => {
-      const { displayPoints, displayLatLngs } = updateStageMarkers();
-      updateDistanceLabels(displayPoints);
-      renderCityLabels(displayPoints, displayLatLngs);
-    };
-
-    map.on("zoomend", rerenderAll);
-    map.on("resize", rerenderAll);
-    map.on("moveend", rerenderAll);
-    // In case moveend doesn't fire (rare), render once right away.
-    rerenderAll();
+    map.fitBounds(bounds, { padding: [60, 60] });
 
     return () => {
       if (mapInstanceRef.current) {
-        clearCityLabels();
-        stageMarkersRef.current = [];
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
@@ -663,12 +235,12 @@ const InteractiveMap = () => {
         {/* Legend */}
         <div className="flex justify-center gap-8 mt-8">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-ocean-deep border-2 border-white shadow-sm" />
-            <span className="text-sm text-muted-foreground">Start (Roomassaare)</span>
+            <div className="w-4 h-4 rounded-full" style={{ backgroundColor: "#2196F3", border: "2px solid white", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }} />
+            <span className="text-sm text-muted-foreground">Sihtkohad</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-ocean-light border-2 border-white shadow-sm" />
-            <span className="text-sm text-muted-foreground">Peatused</span>
+            <div className="w-8 h-0.5" style={{ backgroundColor: "#2196F3", backgroundImage: "repeating-linear-gradient(90deg, #2196F3, #2196F3 8px, transparent 8px, transparent 14px)" }} />
+            <span className="text-sm text-muted-foreground">Marsruut</span>
           </div>
         </div>
       </div>
