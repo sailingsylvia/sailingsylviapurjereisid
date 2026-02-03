@@ -13,7 +13,7 @@ const Footer = () => {
             </div>
             <p className="text-primary-foreground/70 leading-relaxed">
               Purjereisid Euroopa kauneimatesse sadamatesse. 
-              Liitu meiega 2026/2027 aasta suurimal purjeseiklusel!
+              Liitu meiega 2026 aasta suurimal purjeseiklusel!
             </p>
           </div>
 

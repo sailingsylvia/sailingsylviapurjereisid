@@ -42,7 +42,7 @@ const HeroSection = () => {
         >
           <span className="inline-flex items-center gap-2 text-gold font-medium text-sm uppercase tracking-widest mb-6">
             <Anchor size={16} />
-            Purjereisid Euroopas 2026/2027
+            Purjereisid Euroopas 2026
           </span>
         </motion.div>
 
