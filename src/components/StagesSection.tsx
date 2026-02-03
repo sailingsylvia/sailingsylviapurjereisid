@@ -9,7 +9,7 @@ import kielCanal from "@/assets/kiel-canal.jpg";
 import dusseldorfRhine from "@/assets/dusseldorf-rhine.jpg";
 import brestCastle from "@/assets/brest-castle.jpg";
 import vilamouraPort from "@/assets/vilamoura-port.jpg";
-import morairaBeach from "@/assets/moraira-beach.jpg";
+import morairaBeach from "@/assets/moraira-beach-v2.jpg";
 import mallorcaLagoon from "@/assets/mallorca-lagoon.jpg";
 import sardiniaCalaLuna from "@/assets/sardinia-cala-luna.jpg";
 import orikumMarina from "@/assets/orikum-marina.jpg";
