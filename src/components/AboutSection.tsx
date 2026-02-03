@@ -98,7 +98,7 @@ const AboutSection = () => {
             transition={{ duration: 0.6 }}
           >
             <div className="relative">
-              <div className="w-full h-[400px] bg-secondary rounded-2xl shadow-card overflow-hidden flex items-center justify-center p-6">
+              <div className="w-full h-[400px] rounded-2xl shadow-card overflow-hidden flex items-center justify-center">
                 <img
                   src={captainAare}
                   alt="Kapten Aare Kööp"
@@ -162,9 +162,6 @@ const AboutSection = () => {
                 alt="Sylvia regatirajal"
                 className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-ocean-deep/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                <span className="text-primary-foreground font-medium">Regatirajal</span>
-              </div>
             </div>
             <div className="relative group overflow-hidden rounded-xl">
               <img
@@ -172,9 +169,6 @@ const AboutSection = () => {
                 alt="Sylvia täispurjedes"
                 className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-ocean-deep/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                <span className="text-primary-foreground font-medium">Täispurjedes</span>
-              </div>
             </div>
             <div className="relative group overflow-hidden rounded-xl md:col-span-1">
               <img
@@ -182,9 +176,6 @@ const AboutSection = () => {
                 alt="Meeskond pardal"
                 className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-ocean-deep/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                <span className="text-primary-foreground font-medium">Meeskond</span>
-              </div>
             </div>
           </div>
         </motion.div>
