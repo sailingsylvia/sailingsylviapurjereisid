@@ -212,6 +212,11 @@ const InteractiveMap = () => {
         return { dx, dy, rect };
       };
 
+      // Manual label position overrides (city id -> preferred direction: x/y like dirs)
+      const manualOffsets: Record<string, { x: number; y: number }> = {
+        brest: { x: -1, y: 1 }, // left-bottom (sea side)
+      };
+
       stagesToPlace.forEach(({ stage, index }) => {
         const isStart = index === 0;
         const hasDate = Boolean(stage.arrivalDate);
@@ -231,7 +236,10 @@ const InteractiveMap = () => {
         const base = zoom <= 4 ? 48 : zoom === 5 ? 38 : zoom === 6 ? 30 : 24;
         const radii = [base, Math.round(base * 1.35), Math.round(base * 1.8), Math.round(base * 2.4)];
 
-        const dirs = [
+        // Check if this city has a manual preferred direction
+        const manualDir = manualOffsets[stage.id];
+
+        let dirs = [
           { x: 1, y: -1 },
           { x: 1, y: 1 },
           { x: -1, y: -1 },
@@ -249,6 +257,11 @@ const InteractiveMap = () => {
           { x: -1, y: -2 },
           { x: -1, y: 2 },
         ];
+
+        // If manual direction specified, put it first so it gets priority
+        if (manualDir) {
+          dirs = [manualDir, ...dirs.filter((d) => d.x !== manualDir.x || d.y !== manualDir.y)];
+        }
 
         const candidates: Array<{ dx: number; dy: number }> = [];
         for (const r of radii) {
