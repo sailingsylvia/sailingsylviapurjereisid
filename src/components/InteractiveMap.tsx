@@ -31,10 +31,17 @@ const InteractiveMap = () => {
       maxZoom: 19,
     }).addTo(map);
 
-    // Gold color from CSS - #cba747
-    const goldColor = "#cba747";
     const oceanColor = "#1e3a5f";
     const accentColor = "#0891b2";
+
+    // Panes: keep blue dots above city labels; keep distance labels above everything.
+    map.createPane("cityLabels");
+    const cityLabelsPane = map.getPane("cityLabels");
+    if (cityLabelsPane) cityLabelsPane.style.zIndex = "450";
+
+    map.createPane("distanceLabels");
+    const distanceLabelsPane = map.getPane("distanceLabels");
+    if (distanceLabelsPane) distanceLabelsPane.style.zIndex = "610";
 
     // Create custom marker icons - no "finish" distinction anymore
     const createMarkerIcon = (isStart: boolean) => {
@@ -70,6 +77,7 @@ const InteractiveMap = () => {
     }).addTo(map);
 
     // Add distance labels on route segments with offset to avoid overlap
+    const distanceLabelLatLngs: Array<[number, number]> = [];
     for (let i = 1; i < mainStages.length; i++) {
       const stage = mainStages[i];
       const prevStage = mainStages[i - 1];
@@ -106,8 +114,13 @@ const InteractiveMap = () => {
           iconSize: [45, 18],
           iconAnchor: [22, 9],
         });
-        
-        L.marker([offsetLat, offsetLng], { icon: distanceIcon, interactive: false }).addTo(map);
+
+        distanceLabelLatLngs.push([offsetLat, offsetLng]);
+        L.marker([offsetLat, offsetLng], {
+          icon: distanceIcon,
+          interactive: false,
+          pane: "distanceLabels",
+        }).addTo(map);
       }
     }
 
@@ -129,6 +142,29 @@ const InteractiveMap = () => {
       const size = map.getSize();
       const padding = 10;
       const placed: Rect[] = [];
+
+      // Avoid covering other stage dots and distance labels.
+      const markerHitPad = 18;
+      const markerRects: Rect[] = mainStages.map((s) => {
+        const p = map.latLngToContainerPoint([s.coordinates.lat, s.coordinates.lng]);
+        return {
+          left: p.x - markerHitPad,
+          top: p.y - markerHitPad,
+          right: p.x + markerHitPad,
+          bottom: p.y + markerHitPad,
+        };
+      });
+
+      const distanceRects: Rect[] = distanceLabelLatLngs.map(([lat, lng]) => {
+        const p = map.latLngToContainerPoint([lat, lng]);
+        // distance label iconSize: 45x18, iconAnchor: 22x9
+        return {
+          left: p.x - 22,
+          top: p.y - 9,
+          right: p.x - 22 + 45,
+          bottom: p.y - 9 + 18,
+        };
+      });
 
       mainStages.forEach((stage, index) => {
         const isStart = index === 0;
@@ -181,6 +217,19 @@ const InteractiveMap = () => {
             if (area > 0) penalty += area + 8000;
           }
 
+          // Don't cover other dots.
+          for (let mi = 0; mi < markerRects.length; mi++) {
+            if (mi === index) continue; // ok to be close to its own dot
+            const area = overlapArea(rect, markerRects[mi]);
+            if (area > 0) penalty += area * 8 + 30000;
+          }
+
+          // Don't cover distance labels.
+          for (const dr of distanceRects) {
+            const area = overlapArea(rect, dr);
+            if (area > 0) penalty += area * 6 + 25000;
+          }
+
           // Prefer a closer label (smaller displacement)
           penalty += Math.abs(c.dx) * 2 + Math.abs(c.dy) * 1.5;
 
@@ -224,6 +273,7 @@ const InteractiveMap = () => {
         const labelMarker = L.marker([stage.coordinates.lat, stage.coordinates.lng], {
           icon: labelIcon,
           interactive: false,
+          pane: "cityLabels",
         }).addTo(map);
 
         cityLabelMarkersRef.current.push(labelMarker);
