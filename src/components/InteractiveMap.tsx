@@ -215,7 +215,7 @@ const InteractiveMap = () => {
       // Fixed label position offsets (city id -> fixed pixel offset from dot)
       // These bypass the automatic placement algorithm entirely
       const fixedOffsets: Record<string, { dx: number; dy: number }> = {
-        brest: { dx: -130, dy: -60 }, // fixed: left-top (toward Ireland, in the ocean)
+        brest: { dx: -95, dy: -50 }, // fixed: left-top (toward Ireland, in the ocean)
       };
 
       // Manual label position overrides (city id -> preferred direction: x/y like dirs)
