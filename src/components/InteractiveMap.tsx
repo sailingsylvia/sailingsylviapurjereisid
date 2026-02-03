@@ -166,6 +166,29 @@ const InteractiveMap = () => {
         };
       });
 
+      // Treat the dashed route polyline as an obstacle so labels don't sit on it.
+      // We sample a few points along each segment (incl. near endpoints) and build small keepout rects.
+      const routeLinePad = 10;
+      const routeLineRects: Rect[] = [];
+      const sampleTs = [0.15, 0.35, 0.65, 0.85];
+      for (let i = 1; i < mainStages.length; i++) {
+        const a = mainStages[i - 1];
+        const b = mainStages[i];
+        const p1 = map.latLngToContainerPoint([a.coordinates.lat, a.coordinates.lng]);
+        const p2 = map.latLngToContainerPoint([b.coordinates.lat, b.coordinates.lng]);
+
+        for (const t of sampleTs) {
+          const x = p1.x + (p2.x - p1.x) * t;
+          const y = p1.y + (p2.y - p1.y) * t;
+          routeLineRects.push({
+            left: x - routeLinePad,
+            top: y - routeLinePad,
+            right: x + routeLinePad,
+            bottom: y + routeLinePad,
+          });
+        }
+      }
+
       // Place bigger labels first to reduce collisions.
       const stagesToPlace = mainStages
         .map((stage, index) => ({ stage, index }))
@@ -216,14 +239,14 @@ const InteractiveMap = () => {
       // These bypass the automatic placement algorithm entirely
       const fixedOffsets: Record<string, { dx: number; dy: number }> = {
         brest: { dx: -95, dy: -50 }, // fixed: left-top (toward Ireland, in the ocean)
-        kiel: { dx: 30, dy: -55 }, // fixed: right-top, away from route line
-        dusseldorf: { dx: 30, dy: -55 }, // fixed: right-top, away from route line
       };
 
       // Manual label position overrides (city id -> preferred direction: x/y like dirs)
       // Values are direction vectors - larger absolute values push label further in that direction
       const manualOffsets: Record<string, { x: number; y: number }> = {
         vilamoura: { x: -1, y: 1 }, // left-bottom (ocean/Atlantic side)
+        kiel: { x: 1, y: -1 }, // up-right
+        dusseldorf: { x: 1, y: -1 }, // up-right
       };
 
       stagesToPlace.forEach(({ stage, index }) => {
@@ -245,19 +268,17 @@ const InteractiveMap = () => {
         let bestRect: Rect | null = null;
 
         if (fixedOffset) {
-          // Use fixed offset directly
-          best = { dx: fixedOffset.dx, dy: fixedOffset.dy };
-          bestRect = {
-            left: point.x + best.dx,
-            top: point.y + best.dy,
-            right: point.x + best.dx + labelW,
-            bottom: point.y + best.dy + labelH,
-          };
+          // Use fixed offset, but still clamp to viewport.
+          const clamped = clampCandidate(point, fixedOffset.dx, fixedOffset.dy, labelW, labelH);
+          best = { dx: clamped.dx, dy: clamped.dy };
+          bestRect = clamped.rect;
         } else {
           // Candidate top-left offsets relative to the blue dot (in px)
           // Use multiple rings + many directions (bigger offsets on low zoom) to avoid collisions.
           const zoom = map.getZoom();
-          const base = zoom <= 4 ? 48 : zoom === 5 ? 38 : zoom === 6 ? 30 : 24;
+          const baseDefault = zoom <= 4 ? 48 : zoom === 5 ? 38 : zoom === 6 ? 30 : 24;
+          const preferClose = stage.id === "kiel" || stage.id === "dusseldorf";
+          const base = preferClose ? Math.max(22, Math.round(baseDefault * 0.6)) : baseDefault;
           const radii = [base, Math.round(base * 1.35), Math.round(base * 1.8), Math.round(base * 2.4)];
 
           // Check if this city has a manual preferred direction
@@ -341,6 +362,12 @@ const InteractiveMap = () => {
               const area = overlapArea(rect, dr);
               if (area > 0) penalty += area * 22 + 120000;
             }
+
+          // Don't sit on the route polyline.
+          for (const rr of routeLineRects) {
+            const area = overlapArea(rect, rr);
+            if (area > 0) penalty += area * 10 + 90000;
+          }
 
             // Prefer a closer label (smaller displacement)
             penalty += Math.abs(clamped.dx) * 1.1 + Math.abs(clamped.dy) * 0.9;
