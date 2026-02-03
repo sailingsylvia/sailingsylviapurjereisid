@@ -193,7 +193,7 @@ const InteractiveMap = () => {
             Meie teekond
           </span>
           <h2 className="font-display text-4xl md:text-5xl text-foreground mb-4">
-            Marsruut 2026/2027
+            Marsruut 2026
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Roomassaarest Korfuni läbi 11+ sihtkoha – kokku üle{" "}
