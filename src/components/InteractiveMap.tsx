@@ -178,19 +178,33 @@ const InteractiveMap = () => {
       distanceLabelLatLngs.length = 0;
 
       const zoom = map.getZoom();
-      const baseOffsetPx = zoom <= 4 ? 28 : zoom === 5 ? 24 : 20;
       const size = map.getSize();
       const padding = 12;
+
+      // Distance label icon sizing (must match the divIcon above)
+      const labelW = 45;
+      const labelH = 18;
+      const anchorX = 22;
+      const anchorY = 9;
 
       const placed: L.Point[] = [];
       const dotAvoidDist = 38;
       const labelAvoidDist = 34;
 
-      const clampPoint = (p: L.Point) =>
-        L.point(
-          Math.min(size.x - padding, Math.max(padding, p.x)),
-          Math.min(size.y - padding, Math.max(padding, p.y))
+      // Clamp the *anchor point* so the whole label stays visible inside the map.
+      const clampPoint = (p: L.Point) => {
+        const minX = padding + anchorX;
+        const maxX = size.x - padding - (labelW - anchorX);
+        const minY = padding + anchorY;
+        const maxY = size.y - padding - (labelH - anchorY);
+        return L.point(
+          Math.min(maxX, Math.max(minX, p.x)),
+          Math.min(maxY, Math.max(minY, p.y))
         );
+      };
+
+      // Keep labels very close to the dotted line (pixel-based), only nudge when needed.
+      const perpBasePx = zoom <= 4 ? 12 : zoom === 5 ? 10 : 8;
 
       for (const seg of distanceLabelSegments) {
         const i = seg.toIndex;
@@ -199,45 +213,59 @@ const InteractiveMap = () => {
 
         const p1 = map.latLngToContainerPoint([a.coordinates.lat, a.coordinates.lng]);
         const p2 = map.latLngToContainerPoint([b.coordinates.lat, b.coordinates.lng]);
-        const mid = L.point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
-
         const dx = p2.x - p1.x;
         const dy = p2.y - p1.y;
         const len = Math.hypot(dx, dy) || 1;
-
+        const tx = dx / len;
+        const ty = dy / len;
         // Perpendicular unit vector
-        const ux = dy / len;
-        const uy = -dx / len;
+        const nx = ty;
+        const ny = -tx;
 
-        const signBase = i % 2 === 0 ? 1 : -1;
-        const candidates = [
-          { sign: signBase, mult: 1 },
-          { sign: -signBase, mult: 1 },
-          { sign: signBase, mult: 1.6 },
-          { sign: -signBase, mult: 1.6 },
-          { sign: signBase, mult: 2.2 },
-          { sign: -signBase, mult: 2.2 },
+        // Candidates are primarily ON the segment (varying t), with minimal perpendicular nudges.
+        const ts = [0.5, 0.42, 0.58, 0.34, 0.66, 0.26, 0.74];
+        const perps = [
+          0,
+          perpBasePx,
+          -perpBasePx,
+          perpBasePx * 1.8,
+          -perpBasePx * 1.8,
         ];
 
-        let chosen = clampPoint(mid);
-        for (const c of candidates) {
-          const raw = L.point(
-            mid.x + ux * baseOffsetPx * c.mult * c.sign,
-            mid.y + uy * baseOffsetPx * c.mult * c.sign
-          );
-          const cand = clampPoint(raw);
+        let best = clampPoint(L.point(p1.x + dx * 0.5, p1.y + dy * 0.5));
+        let bestPenalty = Number.POSITIVE_INFINITY;
 
-          const tooCloseDots = displayPoints.some((dp) => dp.distanceTo(cand) < dotAvoidDist);
-          const tooCloseOtherLabels = placed.some((pp) => pp.distanceTo(cand) < labelAvoidDist);
+        for (const t of ts) {
+          const onLine = L.point(p1.x + dx * t, p1.y + dy * t);
+          for (const perp of perps) {
+            const raw = L.point(onLine.x + nx * perp, onLine.y + ny * perp);
+            const cand = clampPoint(raw);
 
-          if (!tooCloseDots && !tooCloseOtherLabels) {
-            chosen = cand;
-            break;
+            let penalty = 0;
+
+            // Hard avoid dots and other distance labels.
+            for (const dp of displayPoints) {
+              const d = dp.distanceTo(cand);
+              if (d < dotAvoidDist) penalty += 1_000_000 + (dotAvoidDist - d) * 10_000;
+            }
+            for (const pp of placed) {
+              const d = pp.distanceTo(cand);
+              if (d < labelAvoidDist) penalty += 800_000 + (labelAvoidDist - d) * 9_000;
+            }
+
+            // Prefer to keep it exactly on the segment (perp=0) and near mid (t≈0.5)
+            penalty += Math.abs(perp) * 40;
+            penalty += Math.abs(t - 0.5) * 250;
+
+            if (penalty < bestPenalty) {
+              bestPenalty = penalty;
+              best = cand;
+            }
           }
         }
 
-        placed.push(chosen);
-        const latLng = map.containerPointToLatLng(chosen);
+        placed.push(best);
+        const latLng = map.containerPointToLatLng(best);
         distanceLabelLatLngs.push([latLng.lat, latLng.lng]);
         seg.marker.setLatLng(latLng);
       }
@@ -395,8 +423,18 @@ const InteractiveMap = () => {
           const zoom = map.getZoom();
           const baseDefault = zoom <= 4 ? 48 : zoom === 5 ? 38 : zoom === 6 ? 30 : 24;
           const preferClose = preferCloseCities.has(stage.id);
-          const base = preferClose ? Math.max(22, Math.round(baseDefault * 0.6)) : baseDefault;
-          const radii = [base, Math.round(base * 1.35), Math.round(base * 1.8), Math.round(base * 2.4)];
+          // Only prefer "close" labels at higher zooms; at low zoom we need more room to avoid overlaps.
+          const base = preferClose && zoom >= 6 ? Math.max(22, Math.round(baseDefault * 0.7)) : baseDefault;
+
+          const radiiRaw = [
+            base,
+            Math.round(base * 1.35),
+            Math.round(base * 1.8),
+            Math.round(base * 2.4),
+            Math.round(base * 3.2),
+            Math.round(base * 4.0),
+          ];
+          const radii = radiiRaw.map((r) => Math.min(240, r));
 
           // Check if this city has a manual preferred direction
           const manualDir = manualOffsets[stage.id];
@@ -418,6 +456,14 @@ const InteractiveMap = () => {
             { x: 1, y: 2 },
             { x: -1, y: -2 },
             { x: -1, y: 2 },
+            { x: 3, y: -1 },
+            { x: 3, y: 1 },
+            { x: -3, y: -1 },
+            { x: -3, y: 1 },
+            { x: 1, y: -3 },
+            { x: 1, y: 3 },
+            { x: -1, y: -3 },
+            { x: -1, y: 3 },
           ];
 
           // If manual direction specified, put it first so it gets priority
@@ -461,7 +507,7 @@ const InteractiveMap = () => {
 
             for (const prev of placed) {
               const area = overlapArea(rect, prev);
-              if (area > 0) penalty += area * 8 + 50000;
+              if (area > 0) penalty += area * 20 + 250000;
             }
 
             // Don't cover other dots.
