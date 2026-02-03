@@ -6,7 +6,7 @@ import sylviaSailing1 from "@/assets/sylvia-sailing-1.jpeg";
 import sylviaRacing2 from "@/assets/sylvia-racing-2.jpg";
 import sylviaRacing3 from "@/assets/sylvia-racing-3.jpg";
 import sylviaCrew2 from "@/assets/sylvia-crew-2.jpg";
-import captainAare from "@/assets/captain-aare-nobg.png";
+import captainAare from "@/assets/captain-aare-white.png";
 
 const AboutSection = () => {
   return (
