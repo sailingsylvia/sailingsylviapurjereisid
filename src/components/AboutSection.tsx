@@ -6,7 +6,7 @@ import sylviaSailing1 from "@/assets/sylvia-sailing-1.jpeg";
 import sylviaRacing2 from "@/assets/sylvia-racing-2.jpg";
 import sylviaRacing3 from "@/assets/sylvia-racing-3.jpg";
 import sylviaCrew2 from "@/assets/sylvia-crew-2.jpg";
-import captainAare from "@/assets/captain-aare.png";
+import captainAare from "@/assets/captain-aare-nobg.png";
 
 const AboutSection = () => {
   return (
@@ -98,11 +98,11 @@ const AboutSection = () => {
             transition={{ duration: 0.6 }}
           >
             <div className="relative">
-              <div className="w-full h-[400px] rounded-2xl overflow-hidden flex items-center justify-center">
+              <div className="w-full h-[320px] rounded-2xl overflow-hidden flex items-center justify-center">
                 <img
                   src={captainAare}
                   alt="Kapten Aare Kööp"
-                  className="max-h-full w-auto object-contain"
+                  className="max-h-[300px] w-auto object-contain"
                 />
               </div>
               <div className="absolute -bottom-6 -left-6 bg-gold text-foreground p-4 rounded-xl shadow-lg">
