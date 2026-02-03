@@ -247,7 +247,17 @@ const InteractiveMap = () => {
         vilamoura: { x: -1, y: 1 }, // left-bottom (ocean/Atlantic side)
         kiel: { x: 1, y: -1 }, // up-right
         dusseldorf: { x: 1, y: -1 }, // up-right
+        moraira: { x: 1, y: -1 }, // up-right (away from coast)
+        mallorca: { x: -1, y: -1 }, // up-left
+        sardinia: { x: 1, y: -1 }, // up-right
+        orikum: { x: 1, y: 1 }, // down-right
+        corfu: { x: -1, y: -1 }, // up-left
       };
+
+      // Cities that should have labels placed closer to their dots
+      const preferCloseCities = new Set([
+        "kiel", "dusseldorf", "moraira", "vilamoura", "mallorca", "sardinia", "orikum", "corfu"
+      ]);
 
       stagesToPlace.forEach(({ stage, index }) => {
         const isStart = index === 0;
@@ -277,7 +287,7 @@ const InteractiveMap = () => {
           // Use multiple rings + many directions (bigger offsets on low zoom) to avoid collisions.
           const zoom = map.getZoom();
           const baseDefault = zoom <= 4 ? 48 : zoom === 5 ? 38 : zoom === 6 ? 30 : 24;
-          const preferClose = stage.id === "kiel" || stage.id === "dusseldorf";
+          const preferClose = preferCloseCities.has(stage.id);
           const base = preferClose ? Math.max(22, Math.round(baseDefault * 0.6)) : baseDefault;
           const radii = [base, Math.round(base * 1.35), Math.round(base * 1.8), Math.round(base * 2.4)];
 
