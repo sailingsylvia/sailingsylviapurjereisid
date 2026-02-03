@@ -56,7 +56,7 @@ export const voyageSections: VoyageSection[] = [
         activities: [],
         pricePerDay: 0,
         priceInfo: "Stardipunkt",
-        arrivalDate: "1. juuli 2026",
+        arrivalDate: "20. juuli 2026",
         isStartPoint: true,
         image: "roomassaare-harbor"
       },
@@ -71,9 +71,9 @@ export const voyageSections: VoyageSection[] = [
         description: "Kiel on Läänemere üks olulisemaid sadamalinnu ja purjetamiskultuuri süda. Siit algab tee läbi Kieli kanali Põhjamere poole.",
         highlights: ["Kieler Förde laht", "Meremuuseum", "Kieli kanal", "Laboe mälestusmärk"],
         activities: ["Purjetamismuuseumi külastus", "Fjordi kruiis", "Saksa mereköök", "Kanaliteekonna algus"],
-        pricePerDay: 135,
-        priceInfo: "14 ööpäeva × 135€ = 1890€/inimene",
-        arrivalDate: "15. juuli 2026",
+        pricePerDay: 120,
+        priceInfo: "",
+        arrivalDate: "3. august 2026",
         hasSailingTraining: true,
         image: "kiel-canal"
       },
@@ -87,10 +87,10 @@ export const voyageSections: VoyageSection[] = [
         coordinates: { lat: 51.2277, lng: 6.7735 },
         description: "Reini äärne metropol ühendab kunsti, moodi ja äri. Düsseldorfi vanalinn on tuntud kui 'maailma pikim lett' oma arvukate pubide ja restoranidega.",
         highlights: ["Altstadt vanalinn", "Rheinturm", "Kunstimuuseumid", "Medienhafen"],
-        activities: ["Altbieriproovimine", "Galeriiküla", "Reini promenaad", "Ostlemine Königsallee'l"],
-        pricePerDay: 141,
-        priceInfo: "7 ööpäeva × 141€ = 990€/inimene",
-        arrivalDate: "22. juuli 2026",
+        activities: ["Altbieri proovimine", "Galeriiküla", "Reini promenaad", "Ostlemine Königs alleel"],
+        pricePerDay: 120,
+        priceInfo: "",
+        arrivalDate: "10. august 2026",
         hasSailingTraining: true,
         image: "dusseldorf-rhine"
       },
@@ -105,9 +105,9 @@ export const voyageSections: VoyageSection[] = [
         description: "Bretagne'i suurim sadamalinn Brest on tuntud oma merendusajaloo ja vapustavate rannikumaastikega. Océanopolis on Euroopa üks suurimaid mereakvaariume.",
         highlights: ["Océanopolis", "Brest'i kindlus", "Pont de Recouvrance", "Tanguy torn"],
         activities: ["Mereakvaariumi külastus", "Bretagne'i köök", "Kindluse avastamine", "Ranniku matkarajad"],
-        pricePerDay: 130,
-        priceInfo: "13 ööpäeva × 130€ = 1690€/inimene",
-        arrivalDate: "4. august 2026",
+        pricePerDay: 120,
+        priceInfo: "",
+        arrivalDate: "23. august 2026",
         hasSailingTraining: true,
         image: "brest-castle"
       },
@@ -122,9 +122,9 @@ export const voyageSections: VoyageSection[] = [
         description: "Algarve ranniku pärl on üks Euroopa eksklusiivsemaid jahtide sihtkohti. Kuldne liiv, kristallselge vesi ja maailmatasemel golfiväljakud.",
         highlights: ["Marina de Vilamoura", "Falesia rand", "Loulé turg", "Benagili koobas"],
         activities: ["Delfiinide vaatamine", "Golfipartii", "Algarve köök", "Koobasretk paadiga"],
-        pricePerDay: 145,
-        priceInfo: "13 ööpäeva × 145€ = 1890€/inimene",
-        arrivalDate: "17. august 2026",
+        pricePerDay: 120,
+        priceInfo: "",
+        arrivalDate: "5. september 2026",
         hasSailingTraining: true,
         image: "vilamoura-port"
       },
@@ -136,12 +136,12 @@ export const voyageSections: VoyageSection[] = [
         duration: "14 ööpäeva",
         distanceFromPrevious: 560,
         coordinates: { lat: 38.6879, lng: 0.1375 },
-        description: "Costa Blanca peidetud pärl säilitab endiselt kalurikülaliku võlu. Türkiisne vesi ja valged majad loovad Vahemere idülli.",
+        description: "Costa Blanca peidetud pärl säilitab endiselt kalurikülaliku võlu. Türkiissinine vesi ja valged majad loovad Vahemere idülli.",
         highlights: ["Cap d'Or", "El Portet rand", "Vanalinn", "Viinamarjaistandused"],
         activities: ["Snorgeldamine", "Kohalik mereköök", "Jalgsimatk Cap d'Orile", "Veinidegustatsioon"],
-        pricePerDay: 135,
-        priceInfo: "14 ööpäeva × 135€ = 1890€/inimene",
-        arrivalDate: "31. august 2026",
+        pricePerDay: 120,
+        priceInfo: "",
+        arrivalDate: "19. september 2026",
         image: "moraira-beach"
       },
       {
@@ -153,11 +153,11 @@ export const voyageSections: VoyageSection[] = [
         distanceFromPrevious: 100,
         coordinates: { lat: 38.9067, lng: 1.4206 },
         description: "Ibiza on enamat kui peolinn – UNESCO vanalinn, kristallselged lahesopid ja Vahemere autentseim boheemlik atmosfäär.",
-        highlights: ["Dalt Vila vanalinn", "Es Vedrà", "Ses Salines", "Hippieturud"],
+        highlights: ["Dalt Vila vanalinn", "Es Vedrà", "Ses Salines", "Hippiturud"],
         activities: ["Vanalinna jalutuskäik", "Loojangukruiis", "Soolajärvede külastus", "Rannapäev"],
-        pricePerDay: 290,
-        priceInfo: "1 ööpäev × 290€ = 290€/inimene",
-        arrivalDate: "1. september 2026",
+        pricePerDay: 120,
+        priceInfo: "",
+        arrivalDate: "20. september 2026",
         image: "ibiza-beach"
       },
       {
@@ -171,9 +171,9 @@ export const voyageSections: VoyageSection[] = [
         description: "Baleaari saarte pärl on purjetajate paradiis. Palma katedraal, Serra de Tramuntana mäed ja kristallselge vesi.",
         highlights: ["Palma katedraal", "Serra de Tramuntana", "Valldemossa", "Sólleri tramm"],
         activities: ["Katedraali külastus", "Mägimatk", "Oliivisaagi maitseelamus", "Rannapäev"],
-        pricePerDay: 290,
-        priceInfo: "1 ööpäev × 290€ = 290€/inimene",
-        arrivalDate: "2. september 2026",
+        pricePerDay: 120,
+        priceInfo: "",
+        arrivalDate: "21. september 2026",
         image: "mallorca-lagoon"
       },
       {
@@ -187,9 +187,9 @@ export const voyageSections: VoyageSection[] = [
         description: "Vahemere üks ilusamaid saari pakub kristallselgeid veekogusid, muistseid traditsoone ja maailmakuulsat Costa Smeralda glamuuri.",
         highlights: ["Costa Smeralda", "Nuraghe kompleksid", "La Maddalena saarestik", "Cala Luna"],
         activities: ["Paadireis La Maddalenale", "Nuraghe'de avastamine", "Sardiinia köök", "Snorgeldamine"],
-        pricePerDay: 245,
-        priceInfo: "2 ööpäeva × 245€ = 490€/inimene",
-        arrivalDate: "4. september 2026",
+        pricePerDay: 120,
+        priceInfo: "",
+        arrivalDate: "23. september 2026",
         image: "sardinia-cala-luna"
       },
       {
@@ -201,11 +201,11 @@ export const voyageSections: VoyageSection[] = [
         distanceFromPrevious: 620,
         coordinates: { lat: 40.3269, lng: 19.4314 },
         description: "Albaania Riviera peidetud aare – muistse Rooma sadama varemed kohtuvad puutumata looduse ja Albaania külalislahkusega.",
-        highlights: ["Antiiksadam", "Llogara pass", "Drymadesrannad", "Oricum arheoloogia park"],
+        highlights: ["Antiiksadam", "Llogara pass", "Drymades rannad", "Oricum arheoloogia park"],
         activities: ["Arheoloogi-retk", "Llogara rahvuspark", "Albaania köök", "Snorgeldamine"],
-        pricePerDay: 42,
-        priceInfo: "14 ööpäeva × 42€ = 590€/inimene",
-        arrivalDate: "18. september 2026",
+        pricePerDay: 120,
+        priceInfo: "",
+        arrivalDate: "7. oktoober 2026",
         image: "orikum-marina"
       },
       {
@@ -219,9 +219,9 @@ export const voyageSections: VoyageSection[] = [
         description: "Joonia mere roheline pärl – Korfu ühendab kreeka, veneetsia ja briti mõjutused üheks ainulaadseks kultuurikogemuseks.",
         highlights: ["Kerkyra vanalinn", "Achilleion palee", "Paleokastritsa", "Sidari"],
         activities: ["Vanalinna avastamine", "Paleekülastus", "Rannakuurort", "Kreeka köök"],
-        pricePerDay: 130,
-        priceInfo: "3 ööpäeva × 130€ = 390€/inimene",
-        arrivalDate: "21. september 2026",
+        pricePerDay: 120,
+        priceInfo: "",
+        arrivalDate: "10. oktoober 2026",
         image: "corfu-agios-gordios"
       }
     ]
@@ -242,10 +242,10 @@ export const voyageSections: VoyageSection[] = [
         coordinates: { lat: 38.7071, lng: 20.7094 },
         description: "Unustamatu teekond läbi Joonia mere saarte Ateenasse. Korfu rohelus, Lefkada valged kaljud ja Kreeka pealinna ajalugu.",
         highlights: ["Korfu vanalinn", "Lefkada kaljurannad", "Joonia saarestik", "Ateena Akropolis"],
-        activities: ["Saartevahelised üleminekud", "Snorgeldamine", "Kreeka tavern'id", "Ajaloo avastamine"],
-        pricePerDay: 149,
-        priceInfo: "10 päeva × 149€ = 1490€/inimene",
-        arrivalDate: "22. september 2026",
+        activities: ["Erinevate saarte külastused", "Snorgeldamine", "Kreeka tavern'id", "Ajaloo avastamine"],
+        pricePerDay: 120,
+        priceInfo: "",
+        arrivalDate: "12. oktoober 2026",
         image: "joonia-meri"
       },
       {
@@ -258,10 +258,10 @@ export const voyageSections: VoyageSection[] = [
         coordinates: { lat: 37.4467, lng: 25.3289 },
         description: "Egeuse mere võluv saarestik – Kykladid oma valge-sinise arhitektuuri ja kristallselge veega. Mykonos, Naxos, Paros ja teised.",
         highlights: ["Mykonose tuulikud", "Delose saar", "Naxose templid", "Parose külad"],
-        activities: ["Saartehüpped", "Kreeka öised tavern'id", "Rannapäevad", "Ajaloo avastamine"],
-        pricePerDay: 149,
-        priceInfo: "10 päeva × 149€ = 1490€/inimene",
-        arrivalDate: "3. oktoober 2026",
+        activities: ["Erinevate saarte külastused", "Kreeka öised tavern'id", "Rannapäevad", "Ajaloo avastamine"],
+        pricePerDay: 120,
+        priceInfo: "",
+        arrivalDate: "22. oktoober 2026",
         image: "paros-village"
       },
       {
@@ -273,11 +273,11 @@ export const voyageSections: VoyageSection[] = [
         distanceFromPrevious: null,
         coordinates: { lat: 36.4618, lng: 25.3753 },
         description: "Teine Egeuse mere saartering – Santorin, Ios, Amorgos ja teised kaunid Kykladide saared.",
-        highlights: ["Santorini loojangud", "Ios rannad", "Amorgose klooster", "Vulkaanilised maastikud"],
+        highlights: ["Vulkaan Santorin", "Ios rannad", "Amorgose klooster", "Vulkaanilised maastikud"],
         activities: ["Loojanguvaatlus", "Ujumine", "Kohalik vein", "Fotograafia"],
-        pricePerDay: 149,
-        priceInfo: "10 päeva × 149€ = 1490€/inimene",
-        arrivalDate: "14. oktoober 2026",
+        pricePerDay: 120,
+        priceInfo: "",
+        arrivalDate: "1. november 2026",
         image: "santorini-cyclades"
       },
       {
@@ -291,9 +291,9 @@ export const voyageSections: VoyageSection[] = [
         description: "Saronilise lahe saared Ateena lähedal – Aegina, Poros, Hydra, Spetses. Ideaalne nädal Kreeka nautimiseks.",
         highlights: ["Aegina templid", "Hydra eeslid", "Poros rohelus", "Spetses ajalugu"],
         activities: ["Kerge purjetamine", "Supelrannad", "Kohalik toit", "Saarte avastamine"],
-        pricePerDay: 149,
-        priceInfo: "10 päeva × 149€ = 1490€/inimene",
-        arrivalDate: "25. oktoober 2026",
+        pricePerDay: 120,
+        priceInfo: "",
+        arrivalDate: "11. november 2026",
         image: "hydra-island"
       },
       {
@@ -307,9 +307,9 @@ export const voyageSections: VoyageSection[] = [
         description: "Saronilise lahe ja Argoolise lahe piirkond – Kreeka ajaloo süda. Navplion, Epidauros, Monemvasia.",
         highlights: ["Navplioni kindlus", "Epidaurose teater", "Monemvasia linnus", "Peloponnesose rannik"],
         activities: ["Teatrietendus", "Ajalootuurid", "Kohalikud veinimõisad", "Rannapuhkus"],
-        pricePerDay: 149,
-        priceInfo: "10 päeva × 149€ = 1490€/inimene",
-        arrivalDate: "5. november 2026",
+        pricePerDay: 120,
+        priceInfo: "",
+        arrivalDate: "21. november 2026",
         image: "peloponnese-coast"
       },
       {
@@ -320,12 +320,12 @@ export const voyageSections: VoyageSection[] = [
         duration: "10 päeva",
         distanceFromPrevious: null,
         coordinates: { lat: 37.9838, lng: 23.7275 },
-        description: "Hooaja lõpetamine Ateenas – viimane võimalus nautida Kreeka sügist enne jahtide talvitumist.",
+        description: "Hooaja lõpetamine Ateenas – viimane võimalus nautida Kreeka sügist enne jaht Sylvia Türgi vetesse suuna võtmist.",
         highlights: ["Akropolis", "Plaka", "Piraeuse sadam", "Atika rannik"],
         activities: ["Ateena muuseumid", "Toidutuur", "Lõpupidu", "Kultuurielamused"],
-        pricePerDay: 149,
-        priceInfo: "10 päeva × 149€ = 1490€/inimene",
-        arrivalDate: "16. november 2026",
+        pricePerDay: 120,
+        priceInfo: "",
+        arrivalDate: "1. detsember 2026",
         image: "piraeus-port"
       }
     ]

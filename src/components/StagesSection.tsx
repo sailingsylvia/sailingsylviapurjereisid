@@ -22,6 +22,9 @@ import hydraIsland from "@/assets/hydra-island.jpg";
 import peloponneseCoast from "@/assets/peloponnese-coast.jpg";
 import piraeusPort from "@/assets/piraeus-port.jpg";
 
+// Import Ibiza image
+import ibizaBeach from "@/assets/ibiza-beach.jpg";
+
 // Images for each destination
 const stageImages: Record<string, string> = {
   "roomassaare": roomassaareHarbor,
@@ -30,7 +33,7 @@ const stageImages: Record<string, string> = {
   "brest": brestCastle,
   "vilamoura": vilamouraPort,
   "moraira": morairaBeach,
-  "ibiza": "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=800&h=600&fit=crop",
+  "ibiza": ibizaBeach,
   "mallorca": mallorcaLagoon,
   "sardiinia": sardiniaCalaLuna,
   "orikum": orikumMarina,
@@ -69,7 +72,7 @@ const StagesSection = () => {
               </p>
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 {section.id === 1 
-                  ? `${section.stages.length} etappi läbi Euroopa kaunimate sadamate. Vali endale sobiv lõik!`
+                  ? "10 etappi läbi Euroopa kaunimate sadamate. Vali endale sobiv lõik!"
                   : "Kreeka saarestiku avastamine 10-päevaste etappidena."}
               </p>
             </motion.div>

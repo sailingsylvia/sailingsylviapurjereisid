@@ -121,7 +121,7 @@ const StageCard = ({ stage, index, image }: StageCardProps) => {
           <div className="mb-6 p-4 bg-gold/10 rounded-xl border border-gold/30">
             <h4 className="flex items-center gap-2 font-display text-lg text-foreground mb-3">
               <GraduationCap size={18} className="text-gold" />
-              Intensiivne purjetamiskoolitus
+              Soovijatele intensiivne purjetamiskoolitus
             </h4>
             <ul className="space-y-1.5 text-sm text-muted-foreground">
               {sailingTrainingTopics.map((topic, i) => (
@@ -157,7 +157,7 @@ const StageCard = ({ stage, index, image }: StageCardProps) => {
           <div className="mb-8">
             <h4 className="flex items-center gap-2 font-display text-lg text-foreground mb-3">
               <Waves size={18} className="text-ocean-light" />
-              Tegevused
+              Võimalikud tegevused sihtkohas
             </h4>
             <div className="flex flex-wrap gap-2">
               {stage.activities.map((activity, i) => (

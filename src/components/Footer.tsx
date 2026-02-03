@@ -12,19 +12,29 @@ const Footer = () => {
               <span className="font-display text-2xl">Purjejaht Sylvia</span>
             </div>
             <p className="text-primary-foreground/70 leading-relaxed">
-              Purjereisid Euroopa kauneimates sadamates. 
+              Purjereisid Euroopa kauneimatesse sadamatesse. 
               Liitu meiega 2026/2027 aasta suurimal purjeseiklusel!
             </p>
           </div>
 
           {/* Quick links */}
           <div>
-            <h4 className="font-display text-lg mb-4">Kiirlingid</h4>
+            <h4 className="font-display text-lg mb-4">Lingid</h4>
             <ul className="space-y-2 text-primary-foreground/70">
               <li><a href="#marsruut" className="hover:text-gold transition-colors">Marsruut</a></li>
               <li><a href="#meist" className="hover:text-gold transition-colors">Meist</a></li>
               <li><a href="#etapid" className="hover:text-gold transition-colors">Etapid</a></li>
               <li><a href="#broneeri" className="hover:text-gold transition-colors">Broneeri</a></li>
+              <li>
+                <a 
+                  href="https://www.sailingsylvia.ee" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:text-gold transition-colors"
+                >
+                  Jaht Sylviast
+                </a>
+              </li>
             </ul>
           </div>
 

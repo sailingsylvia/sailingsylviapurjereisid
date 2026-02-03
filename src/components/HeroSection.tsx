@@ -87,8 +87,8 @@ const HeroSection = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.8 }}
         >
-          {[
-            { value: "17", label: "Etappi" },
+        {[
+            { value: "16", label: "Etappi" },
             { value: `${(totalDistanceSection1 / 1000).toFixed(1)}k+`, label: "Meremiili" },
             { value: "2026/27", label: "Hooaeg" },
           ].map((stat, index) => (
