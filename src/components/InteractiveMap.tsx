@@ -111,18 +111,20 @@ const InteractiveMap = () => {
     }
 
     // Position offsets for each city to avoid overlapping labels
+    // anchorX: positive = label left of dot, negative = label right of dot
+    // anchorY: positive = label above dot, negative = label below dot
     const labelPositions: Record<string, { anchorX: number; anchorY: number }> = {
-      "Roomassaare": { anchorX: 20, anchorY: 5 },
-      "Kiel": { anchorX: -95, anchorY: 5 },
-      "Düsseldorf": { anchorX: -100, anchorY: 5 },
-      "Brest": { anchorX: 20, anchorY: 5 },
-      "Vilamoura": { anchorX: -95, anchorY: 5 },
-      "Moraira": { anchorX: 20, anchorY: -35 },
-      "Ibiza": { anchorX: 20, anchorY: 30 },
-      "Mallorca": { anchorX: 20, anchorY: -35 },
-      "Sardiinia": { anchorX: 20, anchorY: -35 },
-      "Orikum": { anchorX: -95, anchorY: 10 },
-      "Korfu": { anchorX: 20, anchorY: 5 },
+      "Roomassaare": { anchorX: -100, anchorY: 20 },      // Right side, above
+      "Kiel": { anchorX: 15, anchorY: 45 },              // Left side, below
+      "Düsseldorf": { anchorX: 15, anchorY: -5 },        // Left side, centered
+      "Brest": { anchorX: 15, anchorY: 50 },             // Left side, below
+      "Vilamoura": { anchorX: 15, anchorY: 45 },         // Left side, below
+      "Moraira": { anchorX: -100, anchorY: 45 },         // Right side, below
+      "Ibiza": { anchorX: 15, anchorY: -5 },             // Left side, centered
+      "Mallorca": { anchorX: -100, anchorY: -5 },        // Right side, centered
+      "Sardiinia": { anchorX: 15, anchorY: -5 },         // Left side, centered
+      "Orikum": { anchorX: 15, anchorY: 50 },            // Left side, below
+      "Korfu": { anchorX: -100, anchorY: -5 },           // Right side, centered
     };
 
     // Add markers and labels for each stage
