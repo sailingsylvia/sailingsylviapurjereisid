@@ -98,11 +98,13 @@ const AboutSection = () => {
             transition={{ duration: 0.6 }}
           >
             <div className="relative">
-              <img
-                src={captainAare}
-                alt="Kapten Aare Kööp"
-                className="w-full h-[400px] object-cover rounded-2xl shadow-card"
-              />
+              <div className="w-full h-[400px] bg-secondary rounded-2xl shadow-card overflow-hidden flex items-center justify-center p-6">
+                <img
+                  src={captainAare}
+                  alt="Kapten Aare Kööp"
+                  className="max-h-full w-auto object-contain"
+                />
+              </div>
               <div className="absolute -bottom-6 -left-6 bg-gold text-foreground p-4 rounded-xl shadow-lg">
                 <Award size={32} />
               </div>

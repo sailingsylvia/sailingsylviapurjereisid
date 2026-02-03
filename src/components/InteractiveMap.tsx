@@ -8,6 +8,7 @@ import "leaflet/dist/leaflet.css";
 const InteractiveMap = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
+  const cityLabelMarkersRef = useRef<L.Marker[]>([]);
   const mainStages = voyageSections[0].stages;
 
   useEffect(() => {
@@ -110,62 +111,127 @@ const InteractiveMap = () => {
       }
     }
 
-    // Position offsets for each city to avoid overlapping labels
-    // anchorX: positive = label left of dot, negative = label right of dot
-    // anchorY: positive = label above dot, negative = label below dot
-    const labelPositions: Record<string, { anchorX: number; anchorY: number }> = {
-      "Roomassaare": { anchorX: -100, anchorY: 20 },      // Right side, above
-      "Kiel": { anchorX: 15, anchorY: 45 },              // Left side, below
-      "Düsseldorf": { anchorX: 15, anchorY: -5 },        // Left side, centered
-      "Brest": { anchorX: 15, anchorY: 50 },             // Left side, below
-      "Vilamoura": { anchorX: 15, anchorY: 45 },         // Left side, below
-      "Moraira": { anchorX: -100, anchorY: 45 },         // Right side, below
-      "Ibiza": { anchorX: 15, anchorY: -5 },             // Left side, centered
-      "Mallorca": { anchorX: -100, anchorY: -5 },        // Right side, centered
-      "Sardiinia": { anchorX: 15, anchorY: -5 },         // Left side, centered
-      "Orikum": { anchorX: 15, anchorY: 50 },            // Left side, below
-      "Korfu": { anchorX: -100, anchorY: -5 },           // Right side, centered
+    const clearCityLabels = () => {
+      cityLabelMarkersRef.current.forEach((m) => m.remove());
+      cityLabelMarkersRef.current = [];
     };
 
-    // Add markers and labels for each stage
+    type Rect = { left: number; top: number; right: number; bottom: number };
+    const overlapArea = (a: Rect, b: Rect) => {
+      const x = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+      const y = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+      return x * y;
+    };
+
+    const renderCityLabels = () => {
+      clearCityLabels();
+
+      const size = map.getSize();
+      const padding = 10;
+      const placed: Rect[] = [];
+
+      mainStages.forEach((stage, index) => {
+        const isStart = index === 0;
+        const hasDate = Boolean(stage.arrivalDate);
+
+        // Slightly adaptive sizing reduces overlap without making labels tiny.
+        const labelW = Math.min(160, Math.max(112, stage.city.length * 8 + 32));
+        const labelH = hasDate ? 44 : 28;
+
+        const point = map.latLngToContainerPoint([
+          stage.coordinates.lat,
+          stage.coordinates.lng,
+        ]);
+
+        // Candidate top-left offsets relative to the blue dot (in px)
+        const candidates = [
+          { dx: 12, dy: -labelH - 12 }, // top-right
+          { dx: 12, dy: 12 }, // bottom-right
+          { dx: -labelW - 12, dy: -labelH - 12 }, // top-left
+          { dx: -labelW - 12, dy: 12 }, // bottom-left
+          { dx: -labelW / 2, dy: -labelH - 12 }, // top
+          { dx: -labelW / 2, dy: 12 }, // bottom
+        ];
+
+        let best = candidates[0];
+        let bestPenalty = Number.POSITIVE_INFINITY;
+        let bestRect: Rect | null = null;
+
+        for (const c of candidates) {
+          const rect: Rect = {
+            left: point.x + c.dx,
+            top: point.y + c.dy,
+            right: point.x + c.dx + labelW,
+            bottom: point.y + c.dy + labelH,
+          };
+
+          let penalty = 0;
+
+          // Keep inside map viewport
+          if (rect.left < padding) penalty += (padding - rect.left) * 2000;
+          if (rect.top < padding) penalty += (padding - rect.top) * 2000;
+          if (rect.right > size.x - padding) penalty += (rect.right - (size.x - padding)) * 2000;
+          if (rect.bottom > size.y - padding) penalty += (rect.bottom - (size.y - padding)) * 2000;
+
+          for (const prev of placed) {
+            const area = overlapArea(rect, prev);
+            if (area > 0) penalty += area + 8000;
+          }
+
+          // Prefer a closer label (smaller displacement)
+          penalty += Math.abs(c.dx) * 2 + Math.abs(c.dy) * 1.5;
+
+          if (penalty < bestPenalty) {
+            bestPenalty = penalty;
+            best = c;
+            bestRect = rect;
+          }
+        }
+
+        if (bestRect) placed.push(bestRect);
+
+        const labelIcon = L.divIcon({
+          className: "city-label",
+          html: `
+            <div style="
+              width: ${labelW}px;
+              height: ${labelH}px;
+              background: rgba(255,255,255,0.95);
+              padding: 5px 8px;
+              border-radius: 6px;
+              font-size: 10px;
+              font-weight: 600;
+              color: ${oceanColor};
+              white-space: nowrap;
+              box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+              border-left: 2px solid ${isStart ? oceanColor : accentColor};
+              text-align: left;
+              overflow: hidden;
+            ">
+              <div style="font-weight: 700; font-size: 10px; overflow: hidden; text-overflow: ellipsis;">${stage.city}</div>
+              ${stage.arrivalDate ? `<div style="font-size: 9px; color: #555; font-weight: 400; overflow: hidden; text-overflow: ellipsis;">${stage.arrivalDate}</div>` : ""}
+            </div>
+          `,
+          iconSize: [labelW, labelH],
+          // iconAnchor is the point (within the icon) that is placed at the marker's LatLng.
+          // We want the label top-left to be offset by (dx, dy) from the dot -> anchor = (-dx, -dy)
+          iconAnchor: [-best.dx, -best.dy],
+        });
+
+        const labelMarker = L.marker([stage.coordinates.lat, stage.coordinates.lng], {
+          icon: labelIcon,
+          interactive: false,
+        }).addTo(map);
+
+        cityLabelMarkersRef.current.push(labelMarker);
+      });
+    };
+
+    // Add markers (dots) for each stage
     mainStages.forEach((stage, index) => {
       const isStart = index === 0;
-
-      // Add marker
       L.marker([stage.coordinates.lat, stage.coordinates.lng], {
         icon: createMarkerIcon(isStart),
-      }).addTo(map);
-
-      // Get custom position or use default
-      const pos = labelPositions[stage.city] || { anchorX: -10, anchorY: index % 2 === 0 ? -35 : 25 };
-
-      // Add persistent label with city name and date
-      const labelIcon = L.divIcon({
-        className: "city-label",
-        html: `
-          <div style="
-            background: rgba(255,255,255,0.95);
-            padding: 3px 6px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: 600;
-            color: ${oceanColor};
-            white-space: nowrap;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.12);
-            border-left: 2px solid ${isStart ? oceanColor : accentColor};
-            text-align: left;
-          ">
-            <div style="font-weight: 700; font-size: 10px;">${stage.city}</div>
-            ${stage.arrivalDate ? `<div style="font-size: 9px; color: #555; font-weight: 400;">${stage.arrivalDate}</div>` : ''}
-          </div>
-        `,
-        iconSize: [90, 35],
-        iconAnchor: [pos.anchorX, pos.anchorY],
-      });
-
-      L.marker([stage.coordinates.lat, stage.coordinates.lng], { 
-        icon: labelIcon,
-        interactive: false 
       }).addTo(map);
     });
 
@@ -173,8 +239,17 @@ const InteractiveMap = () => {
     const bounds = L.latLngBounds(routeCoordinates);
     map.fitBounds(bounds, { padding: [50, 50] });
 
+    // Render labels after fitBounds (and keep them non-overlapping on zoom/resize)
+    const rerender = () => renderCityLabels();
+    map.on("zoomend", rerender);
+    map.on("resize", rerender);
+    map.on("moveend", rerender);
+    // In case moveend doesn't fire (rare), render once right away.
+    renderCityLabels();
+
     return () => {
       if (mapInstanceRef.current) {
+        clearCityLabels();
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
