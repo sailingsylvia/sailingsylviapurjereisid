@@ -248,7 +248,8 @@ const InteractiveMap = () => {
         kiel: { x: 1, y: -1 }, // up-right
         dusseldorf: { x: 1, y: -1 }, // up-right
         moraira: { x: 1, y: -1 }, // up-right (away from coast)
-        mallorca: { x: -1, y: -1 }, // up-left
+        mallorca: { x: 1, y: 1 }, // down-right (away from Ibiza)
+        ibiza: { x: -1, y: -1 }, // up-left (opposite of Mallorca)
         sardinia: { x: 1, y: -1 }, // up-right
         orikum: { x: 1, y: 1 }, // down-right
         corfu: { x: -1, y: -1 }, // up-left
@@ -256,7 +257,7 @@ const InteractiveMap = () => {
 
       // Cities that should have labels placed closer to their dots
       const preferCloseCities = new Set([
-        "kiel", "dusseldorf", "moraira", "vilamoura", "mallorca", "sardinia", "orikum", "corfu"
+        "kiel", "dusseldorf", "moraira", "vilamoura", "mallorca", "ibiza", "sardinia", "orikum", "corfu"
       ]);
 
       stagesToPlace.forEach(({ stage, index }) => {
