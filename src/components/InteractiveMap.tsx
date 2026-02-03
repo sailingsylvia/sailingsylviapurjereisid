@@ -213,8 +213,9 @@ const InteractiveMap = () => {
       };
 
       // Manual label position overrides (city id -> preferred direction: x/y like dirs)
+      // Values are direction vectors - larger absolute values push label further in that direction
       const manualOffsets: Record<string, { x: number; y: number }> = {
-        brest: { x: -1, y: -1 }, // top-left (ocean between France and Ireland)
+        brest: { x: -2, y: -1 }, // far left, slightly up (ocean between France and Ireland)
         vilamoura: { x: -1, y: 1 }, // left-bottom (ocean/Atlantic side)
       };
 
