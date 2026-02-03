@@ -98,7 +98,7 @@ const AboutSection = () => {
             transition={{ duration: 0.6 }}
           >
             <div className="relative">
-              <div className="w-full h-[320px] rounded-2xl overflow-hidden flex items-center justify-center">
+              <div className="w-full h-[320px] rounded-2xl overflow-hidden flex items-center justify-center bg-white">
                 <img
                   src={captainAare}
                   alt="Kapten Aare Kööp"
