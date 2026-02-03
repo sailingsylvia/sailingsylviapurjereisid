@@ -71,12 +71,14 @@ const HeroSection = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
         >
-          <Button variant="gold" size="xl">
-            <MapPin size={20} />
-            Vaata etappe
+          <Button variant="gold" size="xl" asChild>
+            <a href="#etapid">
+              <MapPin size={20} />
+              Vaata etappe
+            </a>
           </Button>
-          <Button variant="heroOutline" size="xl">
-            Broneeri koht
+          <Button variant="heroOutline" size="xl" asChild>
+            <a href="#broneeri">Broneeri koht</a>
           </Button>
         </motion.div>
 
