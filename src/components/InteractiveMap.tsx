@@ -212,10 +212,15 @@ const InteractiveMap = () => {
         return { dx, dy, rect };
       };
 
+      // Fixed label position offsets (city id -> fixed pixel offset from dot)
+      // These bypass the automatic placement algorithm entirely
+      const fixedOffsets: Record<string, { dx: number; dy: number }> = {
+        brest: { dx: -130, dy: -60 }, // fixed: left-top (toward Ireland, in the ocean)
+      };
+
       // Manual label position overrides (city id -> preferred direction: x/y like dirs)
       // Values are direction vectors - larger absolute values push label further in that direction
       const manualOffsets: Record<string, { x: number; y: number }> = {
-        brest: { x: -2, y: -1 }, // far left, slightly up (ocean between France and Ireland)
         vilamoura: { x: -1, y: 1 }, // left-bottom (ocean/Atlantic side)
       };
 
@@ -232,102 +237,117 @@ const InteractiveMap = () => {
           stage.coordinates.lng,
         ]);
 
-        // Candidate top-left offsets relative to the blue dot (in px)
-        // Use multiple rings + many directions (bigger offsets on low zoom) to avoid collisions.
-        const zoom = map.getZoom();
-        const base = zoom <= 4 ? 48 : zoom === 5 ? 38 : zoom === 6 ? 30 : 24;
-        const radii = [base, Math.round(base * 1.35), Math.round(base * 1.8), Math.round(base * 2.4)];
-
-        // Check if this city has a manual preferred direction
-        const manualDir = manualOffsets[stage.id];
-
-        let dirs = [
-          { x: 1, y: -1 },
-          { x: 1, y: 1 },
-          { x: -1, y: -1 },
-          { x: -1, y: 1 },
-          { x: 1, y: 0 },
-          { x: -1, y: 0 },
-          { x: 0, y: -1 },
-          { x: 0, y: 1 },
-          { x: 2, y: -1 },
-          { x: 2, y: 1 },
-          { x: -2, y: -1 },
-          { x: -2, y: 1 },
-          { x: 1, y: -2 },
-          { x: 1, y: 2 },
-          { x: -1, y: -2 },
-          { x: -1, y: 2 },
-        ];
-
-        // If manual direction specified, put it first so it gets priority
-        if (manualDir) {
-          dirs = [manualDir, ...dirs.filter((d) => d.x !== manualDir.x || d.y !== manualDir.y)];
-        }
-
-        const candidates: Array<{ dx: number; dy: number }> = [];
-        for (const r of radii) {
-          for (const d of dirs) {
-            const len = Math.hypot(d.x, d.y) || 1;
-            const ux = d.x / len;
-            const uy = d.y / len;
-            const ax = ux * r;
-            const ay = uy * r;
-
-            let dx = 0;
-            let dy = 0;
-
-            // If we're roughly centered on an axis, center the label on that axis.
-            if (Math.abs(ux) < 0.2) dx = -labelW / 2;
-            else if (ux > 0) dx = ax;
-            else dx = ax - labelW;
-
-            if (Math.abs(uy) < 0.2) dy = -labelH / 2;
-            else if (uy > 0) dy = ay;
-            else dy = ay - labelH;
-
-            candidates.push({ dx, dy });
-          }
-        }
-
-        let best = candidates[0];
-        let bestPenalty = Number.POSITIVE_INFINITY;
+        // Check if this city has a fixed offset (bypasses automatic placement)
+        const fixedOffset = fixedOffsets[stage.id];
+        let best: { dx: number; dy: number };
         let bestRect: Rect | null = null;
 
-        for (const c of candidates) {
-          const clamped = clampCandidate(point, c.dx, c.dy, labelW, labelH);
-          const rect = clamped.rect;
+        if (fixedOffset) {
+          // Use fixed offset directly
+          best = { dx: fixedOffset.dx, dy: fixedOffset.dy };
+          bestRect = {
+            left: point.x + best.dx,
+            top: point.y + best.dy,
+            right: point.x + best.dx + labelW,
+            bottom: point.y + best.dy + labelH,
+          };
+        } else {
+          // Candidate top-left offsets relative to the blue dot (in px)
+          // Use multiple rings + many directions (bigger offsets on low zoom) to avoid collisions.
+          const zoom = map.getZoom();
+          const base = zoom <= 4 ? 48 : zoom === 5 ? 38 : zoom === 6 ? 30 : 24;
+          const radii = [base, Math.round(base * 1.35), Math.round(base * 1.8), Math.round(base * 2.4)];
 
-          let penalty = 0;
+          // Check if this city has a manual preferred direction
+          const manualDir = manualOffsets[stage.id];
 
-          for (const prev of placed) {
-            const area = overlapArea(rect, prev);
-            if (area > 0) penalty += area * 8 + 50000;
+          let dirs = [
+            { x: 1, y: -1 },
+            { x: 1, y: 1 },
+            { x: -1, y: -1 },
+            { x: -1, y: 1 },
+            { x: 1, y: 0 },
+            { x: -1, y: 0 },
+            { x: 0, y: -1 },
+            { x: 0, y: 1 },
+            { x: 2, y: -1 },
+            { x: 2, y: 1 },
+            { x: -2, y: -1 },
+            { x: -2, y: 1 },
+            { x: 1, y: -2 },
+            { x: 1, y: 2 },
+            { x: -1, y: -2 },
+            { x: -1, y: 2 },
+          ];
+
+          // If manual direction specified, put it first so it gets priority
+          if (manualDir) {
+            dirs = [manualDir, ...dirs.filter((d) => d.x !== manualDir.x || d.y !== manualDir.y)];
           }
 
-          // Don't cover other dots.
-          for (let mi = 0; mi < markerRects.length; mi++) {
-            const area = overlapArea(rect, markerRects[mi]);
-            if (area > 0) {
-              // Never cover its own dot.
-              if (mi === index) penalty += 1_000_000;
-              else penalty += area * 18 + 90_000;
+          const candidates: Array<{ dx: number; dy: number }> = [];
+          for (const r of radii) {
+            for (const d of dirs) {
+              const len = Math.hypot(d.x, d.y) || 1;
+              const ux = d.x / len;
+              const uy = d.y / len;
+              const ax = ux * r;
+              const ay = uy * r;
+
+              let dx = 0;
+              let dy = 0;
+
+              // If we're roughly centered on an axis, center the label on that axis.
+              if (Math.abs(ux) < 0.2) dx = -labelW / 2;
+              else if (ux > 0) dx = ax;
+              else dx = ax - labelW;
+
+              if (Math.abs(uy) < 0.2) dy = -labelH / 2;
+              else if (uy > 0) dy = ay;
+              else dy = ay - labelH;
+
+              candidates.push({ dx, dy });
             }
           }
 
-          // Don't cover distance labels.
-          for (const dr of distanceRects) {
-            const area = overlapArea(rect, dr);
-            if (area > 0) penalty += area * 22 + 120000;
-          }
+          best = candidates[0];
+          let bestPenalty = Number.POSITIVE_INFINITY;
 
-          // Prefer a closer label (smaller displacement)
-          penalty += Math.abs(clamped.dx) * 1.1 + Math.abs(clamped.dy) * 0.9;
+          for (const c of candidates) {
+            const clamped = clampCandidate(point, c.dx, c.dy, labelW, labelH);
+            const rect = clamped.rect;
 
-          if (penalty < bestPenalty) {
-            bestPenalty = penalty;
-            best = { dx: clamped.dx, dy: clamped.dy };
-            bestRect = rect;
+            let penalty = 0;
+
+            for (const prev of placed) {
+              const area = overlapArea(rect, prev);
+              if (area > 0) penalty += area * 8 + 50000;
+            }
+
+            // Don't cover other dots.
+            for (let mi = 0; mi < markerRects.length; mi++) {
+              const area = overlapArea(rect, markerRects[mi]);
+              if (area > 0) {
+                // Never cover its own dot.
+                if (mi === index) penalty += 1_000_000;
+                else penalty += area * 18 + 90_000;
+              }
+            }
+
+            // Don't cover distance labels.
+            for (const dr of distanceRects) {
+              const area = overlapArea(rect, dr);
+              if (area > 0) penalty += area * 22 + 120000;
+            }
+
+            // Prefer a closer label (smaller displacement)
+            penalty += Math.abs(clamped.dx) * 1.1 + Math.abs(clamped.dy) * 0.9;
+
+            if (penalty < bestPenalty) {
+              bestPenalty = penalty;
+              best = { dx: clamped.dx, dy: clamped.dy };
+              bestRect = rect;
+            }
           }
         }
 
