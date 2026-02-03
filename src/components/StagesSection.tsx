@@ -39,11 +39,8 @@ const stageImages: Record<string, string> = {
   "orikum": orikumMarina,
   "korfu": corfuAgiosGordios,
   "lefkada": jooniaMeri,
-  "egeuse-1": parosVillage,
-  "egeuse-2": santoriniCyclades,
-  "ateena-1": hydraIsland,
-  "ateena-2": peloponneseCoast,
-  "ateena-3": piraeusPort,
+  "egeuse": santoriniCyclades,
+  "ateena": hydraIsland,
 };
 
 const defaultImage = akropolis;
