@@ -144,13 +144,16 @@ const InteractiveMap = () => {
         ]);
 
         // Candidate top-left offsets relative to the blue dot (in px)
+        // Increased offsets to keep labels further from markers
         const candidates = [
-          { dx: 12, dy: -labelH - 12 }, // top-right
-          { dx: 12, dy: 12 }, // bottom-right
-          { dx: -labelW - 12, dy: -labelH - 12 }, // top-left
-          { dx: -labelW - 12, dy: 12 }, // bottom-left
-          { dx: -labelW / 2, dy: -labelH - 12 }, // top
-          { dx: -labelW / 2, dy: 12 }, // bottom
+          { dx: 20, dy: -labelH - 20 }, // top-right
+          { dx: 20, dy: 20 }, // bottom-right
+          { dx: -labelW - 20, dy: -labelH - 20 }, // top-left
+          { dx: -labelW - 20, dy: 20 }, // bottom-left
+          { dx: -labelW / 2, dy: -labelH - 22 }, // top
+          { dx: -labelW / 2, dy: 22 }, // bottom
+          { dx: 25, dy: -labelH / 2 }, // right
+          { dx: -labelW - 25, dy: -labelH / 2 }, // left
         ];
 
         let best = candidates[0];
