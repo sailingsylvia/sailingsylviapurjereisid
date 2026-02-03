@@ -214,7 +214,8 @@ const InteractiveMap = () => {
 
       // Manual label position overrides (city id -> preferred direction: x/y like dirs)
       const manualOffsets: Record<string, { x: number; y: number }> = {
-        brest: { x: -1, y: 1 }, // left-bottom (sea side)
+        brest: { x: -1, y: 0 }, // left (ocean/Atlantic side)
+        vilamoura: { x: -1, y: 1 }, // left-bottom (ocean/Atlantic side)
       };
 
       stagesToPlace.forEach(({ stage, index }) => {
