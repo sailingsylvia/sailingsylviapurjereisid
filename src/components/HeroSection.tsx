@@ -90,7 +90,7 @@ const HeroSection = () => {
         {[
             { value: "16", label: "Etappi" },
             { value: `${(totalDistanceSection1 / 1000).toFixed(1)}k+`, label: "Meremiili" },
-            { value: "2026/27", label: "Hooaeg" },
+            { value: "2026", label: "Hooaeg" },
           ].map((stat, index) => (
             <div key={index} className="text-center">
               <div className="text-3xl md:text-4xl font-display text-gold mb-1">
