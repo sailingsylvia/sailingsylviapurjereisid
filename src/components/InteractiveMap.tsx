@@ -9,6 +9,7 @@ const InteractiveMap = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const cityLabelMarkersRef = useRef<L.Marker[]>([]);
+  const stageMarkersRef = useRef<L.Marker[]>([]);
   const mainStages = voyageSections[0].stages;
 
   useEffect(() => {
@@ -80,26 +81,19 @@ const InteractiveMap = () => {
       dashArray: "10, 8",
     }).addTo(map);
 
-    // Add distance labels on route segments with offset to avoid overlap
+    // Distance labels (meremiilid) are implemented as markers that we can reposition
+    // on zoom/move so they don't hide behind dots or drift out of bounds.
     const distanceLabelLatLngs: Array<[number, number]> = [];
+    const distanceLabelSegments: Array<{ marker: L.Marker; toIndex: number }> = [];
+
     for (let i = 1; i < mainStages.length; i++) {
       const stage = mainStages[i];
       const prevStage = mainStages[i - 1];
-      
+
       if (stage.distanceFromPrevious) {
-        // Calculate midpoint with slight offset to avoid line overlap
         const midLat = (stage.coordinates.lat + prevStage.coordinates.lat) / 2;
         const midLng = (stage.coordinates.lng + prevStage.coordinates.lng) / 2;
-        
-        // Add perpendicular offset based on segment direction
-        const latDiff = stage.coordinates.lat - prevStage.coordinates.lat;
-        const lngDiff = stage.coordinates.lng - prevStage.coordinates.lng;
-        const length = Math.sqrt(latDiff * latDiff + lngDiff * lngDiff);
-        const offsetDistance = 0.3;
-        const offsetLat = midLat + (lngDiff / length) * offsetDistance * (i % 2 === 0 ? 1 : -1);
-        const offsetLng = midLng - (latDiff / length) * offsetDistance * (i % 2 === 0 ? 1 : -1);
-        
-        // Add distance label
+
         const distanceIcon = L.divIcon({
           className: "distance-label",
           html: `
@@ -119,12 +113,13 @@ const InteractiveMap = () => {
           iconAnchor: [22, 9],
         });
 
-        distanceLabelLatLngs.push([offsetLat, offsetLng]);
-        L.marker([offsetLat, offsetLng], {
+        const marker = L.marker([midLat, midLng], {
           icon: distanceIcon,
           interactive: false,
           pane: "distanceLabels",
         }).addTo(map);
+
+        distanceLabelSegments.push({ marker, toIndex: i });
       }
     }
 
@@ -140,7 +135,115 @@ const InteractiveMap = () => {
       return x * y;
     };
 
-    const renderCityLabels = () => {
+    const computeSpiderfiedStagePoints = () => {
+      const basePoints = mainStages.map((s) =>
+        map.latLngToContainerPoint([s.coordinates.lat, s.coordinates.lng])
+      );
+
+      // Marker icon is 28x28 => use slightly bigger separation to avoid stacking.
+      const minDist = 36;
+      const placed: L.Point[] = [];
+      const result: L.Point[] = [];
+
+      const isFarEnough = (p: L.Point) => placed.every((q) => q.distanceTo(p) >= minDist);
+
+      const spiralFind = (p: L.Point) => {
+        // Deterministic spiral so it doesn't jitter on re-render.
+        for (let step = 0; step < 48; step++) {
+          const angle = step * 0.85;
+          const r = 6 + step * 3;
+          const cand = L.point(p.x + Math.cos(angle) * r, p.y + Math.sin(angle) * r);
+          if (isFarEnough(cand)) return cand;
+        }
+        return p;
+      };
+
+      for (const p of basePoints) {
+        const candidate = isFarEnough(p) ? p : spiralFind(p);
+        placed.push(candidate);
+        result.push(candidate);
+      }
+
+      return result;
+    };
+
+    const updateStageMarkers = () => {
+      const displayPoints = computeSpiderfiedStagePoints();
+      const displayLatLngs = displayPoints.map((p) => map.containerPointToLatLng(p));
+      stageMarkersRef.current.forEach((m, i) => m.setLatLng(displayLatLngs[i]));
+      return { displayPoints, displayLatLngs };
+    };
+
+    const updateDistanceLabels = (displayPoints: L.Point[]) => {
+      distanceLabelLatLngs.length = 0;
+
+      const zoom = map.getZoom();
+      const baseOffsetPx = zoom <= 4 ? 28 : zoom === 5 ? 24 : 20;
+      const size = map.getSize();
+      const padding = 12;
+
+      const placed: L.Point[] = [];
+      const dotAvoidDist = 38;
+      const labelAvoidDist = 34;
+
+      const clampPoint = (p: L.Point) =>
+        L.point(
+          Math.min(size.x - padding, Math.max(padding, p.x)),
+          Math.min(size.y - padding, Math.max(padding, p.y))
+        );
+
+      for (const seg of distanceLabelSegments) {
+        const i = seg.toIndex;
+        const a = mainStages[i - 1];
+        const b = mainStages[i];
+
+        const p1 = map.latLngToContainerPoint([a.coordinates.lat, a.coordinates.lng]);
+        const p2 = map.latLngToContainerPoint([b.coordinates.lat, b.coordinates.lng]);
+        const mid = L.point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
+
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const len = Math.hypot(dx, dy) || 1;
+
+        // Perpendicular unit vector
+        const ux = dy / len;
+        const uy = -dx / len;
+
+        const signBase = i % 2 === 0 ? 1 : -1;
+        const candidates = [
+          { sign: signBase, mult: 1 },
+          { sign: -signBase, mult: 1 },
+          { sign: signBase, mult: 1.6 },
+          { sign: -signBase, mult: 1.6 },
+          { sign: signBase, mult: 2.2 },
+          { sign: -signBase, mult: 2.2 },
+        ];
+
+        let chosen = clampPoint(mid);
+        for (const c of candidates) {
+          const raw = L.point(
+            mid.x + ux * baseOffsetPx * c.mult * c.sign,
+            mid.y + uy * baseOffsetPx * c.mult * c.sign
+          );
+          const cand = clampPoint(raw);
+
+          const tooCloseDots = displayPoints.some((dp) => dp.distanceTo(cand) < dotAvoidDist);
+          const tooCloseOtherLabels = placed.some((pp) => pp.distanceTo(cand) < labelAvoidDist);
+
+          if (!tooCloseDots && !tooCloseOtherLabels) {
+            chosen = cand;
+            break;
+          }
+        }
+
+        placed.push(chosen);
+        const latLng = map.containerPointToLatLng(chosen);
+        distanceLabelLatLngs.push([latLng.lat, latLng.lng]);
+        seg.marker.setLatLng(latLng);
+      }
+    };
+
+    const renderCityLabels = (displayPoints: L.Point[], displayLatLngs: L.LatLng[]) => {
       clearCityLabels();
 
       const size = map.getSize();
@@ -150,8 +253,7 @@ const InteractiveMap = () => {
       // Avoid covering other stage dots and distance labels.
       // Larger hit padding ensures blue dots stay visible
       const markerHitPad = 28;
-      const markerRects: Rect[] = mainStages.map((s) => {
-        const p = map.latLngToContainerPoint([s.coordinates.lat, s.coordinates.lng]);
+      const markerRects: Rect[] = displayPoints.map((p) => {
         return {
           left: p.x - markerHitPad,
           top: p.y - markerHitPad,
@@ -275,10 +377,7 @@ const InteractiveMap = () => {
         const labelW = Math.min(160, Math.max(112, stage.city.length * 8 + 32));
         const labelH = hasDate ? 44 : 28;
 
-        const point = map.latLngToContainerPoint([
-          stage.coordinates.lat,
-          stage.coordinates.lng,
-        ]);
+        const point = displayPoints[index];
 
         // Check if this city has a fixed offset (bypasses automatic placement)
         const fixedOffset = fixedOffsets[stage.id];
@@ -428,7 +527,8 @@ const InteractiveMap = () => {
           iconAnchor: [-best.dx, -best.dy],
         });
 
-        const labelMarker = L.marker([stage.coordinates.lat, stage.coordinates.lng], {
+        const baseLatLng = displayLatLngs[index];
+        const labelMarker = L.marker([baseLatLng.lat, baseLatLng.lng], {
           icon: labelIcon,
           interactive: false,
           pane: "cityLabels",
@@ -438,30 +538,39 @@ const InteractiveMap = () => {
       });
     };
 
-    // Add markers (dots) for each stage - on top pane so they're always visible
+    // Add stage markers (dots) – we keep references so we can "spiderfy" close ones on zoom
+    stageMarkersRef.current = [];
     mainStages.forEach((stage, index) => {
       const isStart = index === 0;
-      L.marker([stage.coordinates.lat, stage.coordinates.lng], {
+      const marker = L.marker([stage.coordinates.lat, stage.coordinates.lng], {
         icon: createMarkerIcon(isStart),
         pane: "markers",
       }).addTo(map);
+
+      stageMarkersRef.current.push(marker);
     });
 
-    // Fit bounds to show all markers
+    // Fit bounds to show all markers + keep margin for labels
     const bounds = L.latLngBounds(routeCoordinates);
-    map.fitBounds(bounds, { padding: [50, 50] });
+    map.fitBounds(bounds, { padding: [80, 80] });
 
-    // Render labels after fitBounds (and keep them non-overlapping on zoom/resize)
-    const rerender = () => renderCityLabels();
-    map.on("zoomend", rerender);
-    map.on("resize", rerender);
-    map.on("moveend", rerender);
+    // Render everything after fitBounds (and keep non-overlapping on zoom/resize)
+    const rerenderAll = () => {
+      const { displayPoints, displayLatLngs } = updateStageMarkers();
+      updateDistanceLabels(displayPoints);
+      renderCityLabels(displayPoints, displayLatLngs);
+    };
+
+    map.on("zoomend", rerenderAll);
+    map.on("resize", rerenderAll);
+    map.on("moveend", rerenderAll);
     // In case moveend doesn't fire (rare), render once right away.
-    renderCityLabels();
+    rerenderAll();
 
     return () => {
       if (mapInstanceRef.current) {
         clearCityLabels();
+        stageMarkersRef.current = [];
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
