@@ -166,7 +166,53 @@ const InteractiveMap = () => {
         };
       });
 
-      mainStages.forEach((stage, index) => {
+      // Place bigger labels first to reduce collisions.
+      const stagesToPlace = mainStages
+        .map((stage, index) => ({ stage, index }))
+        .sort((a, b) => {
+          const wa = Math.min(160, Math.max(112, a.stage.city.length * 8 + 32));
+          const wb = Math.min(160, Math.max(112, b.stage.city.length * 8 + 32));
+          return wb - wa;
+        });
+
+      const clampCandidate = (
+        point: L.Point,
+        dx: number,
+        dy: number,
+        w: number,
+        h: number
+      ) => {
+        let left = point.x + dx;
+        let top = point.y + dy;
+        let right = left + w;
+        let bottom = top + h;
+
+        if (left < padding) {
+          dx += padding - left;
+          left = padding;
+          right = left + w;
+        }
+        if (top < padding) {
+          dy += padding - top;
+          top = padding;
+          bottom = top + h;
+        }
+        if (right > size.x - padding) {
+          dx -= right - (size.x - padding);
+          right = size.x - padding;
+          left = right - w;
+        }
+        if (bottom > size.y - padding) {
+          dy -= bottom - (size.y - padding);
+          bottom = size.y - padding;
+          top = bottom - h;
+        }
+
+        const rect: Rect = { left, top, right, bottom };
+        return { dx, dy, rect };
+      };
+
+      stagesToPlace.forEach(({ stage, index }) => {
         const isStart = index === 0;
         const hasDate = Boolean(stage.arrivalDate);
 
@@ -180,62 +226,92 @@ const InteractiveMap = () => {
         ]);
 
         // Candidate top-left offsets relative to the blue dot (in px)
-        // Increased offsets to keep labels further from markers
-        const candidates = [
-          { dx: 20, dy: -labelH - 20 }, // top-right
-          { dx: 20, dy: 20 }, // bottom-right
-          { dx: -labelW - 20, dy: -labelH - 20 }, // top-left
-          { dx: -labelW - 20, dy: 20 }, // bottom-left
-          { dx: -labelW / 2, dy: -labelH - 22 }, // top
-          { dx: -labelW / 2, dy: 22 }, // bottom
-          { dx: 25, dy: -labelH / 2 }, // right
-          { dx: -labelW - 25, dy: -labelH / 2 }, // left
+        // Use multiple rings + many directions (bigger offsets on low zoom) to avoid collisions.
+        const zoom = map.getZoom();
+        const base = zoom <= 4 ? 48 : zoom === 5 ? 38 : zoom === 6 ? 30 : 24;
+        const radii = [base, Math.round(base * 1.35), Math.round(base * 1.8), Math.round(base * 2.4)];
+
+        const dirs = [
+          { x: 1, y: -1 },
+          { x: 1, y: 1 },
+          { x: -1, y: -1 },
+          { x: -1, y: 1 },
+          { x: 1, y: 0 },
+          { x: -1, y: 0 },
+          { x: 0, y: -1 },
+          { x: 0, y: 1 },
+          { x: 2, y: -1 },
+          { x: 2, y: 1 },
+          { x: -2, y: -1 },
+          { x: -2, y: 1 },
+          { x: 1, y: -2 },
+          { x: 1, y: 2 },
+          { x: -1, y: -2 },
+          { x: -1, y: 2 },
         ];
+
+        const candidates: Array<{ dx: number; dy: number }> = [];
+        for (const r of radii) {
+          for (const d of dirs) {
+            const len = Math.hypot(d.x, d.y) || 1;
+            const ux = d.x / len;
+            const uy = d.y / len;
+            const ax = ux * r;
+            const ay = uy * r;
+
+            let dx = 0;
+            let dy = 0;
+
+            // If we're roughly centered on an axis, center the label on that axis.
+            if (Math.abs(ux) < 0.2) dx = -labelW / 2;
+            else if (ux > 0) dx = ax;
+            else dx = ax - labelW;
+
+            if (Math.abs(uy) < 0.2) dy = -labelH / 2;
+            else if (uy > 0) dy = ay;
+            else dy = ay - labelH;
+
+            candidates.push({ dx, dy });
+          }
+        }
 
         let best = candidates[0];
         let bestPenalty = Number.POSITIVE_INFINITY;
         let bestRect: Rect | null = null;
 
         for (const c of candidates) {
-          const rect: Rect = {
-            left: point.x + c.dx,
-            top: point.y + c.dy,
-            right: point.x + c.dx + labelW,
-            bottom: point.y + c.dy + labelH,
-          };
+          const clamped = clampCandidate(point, c.dx, c.dy, labelW, labelH);
+          const rect = clamped.rect;
 
           let penalty = 0;
 
-          // Keep inside map viewport
-          if (rect.left < padding) penalty += (padding - rect.left) * 2000;
-          if (rect.top < padding) penalty += (padding - rect.top) * 2000;
-          if (rect.right > size.x - padding) penalty += (rect.right - (size.x - padding)) * 2000;
-          if (rect.bottom > size.y - padding) penalty += (rect.bottom - (size.y - padding)) * 2000;
-
           for (const prev of placed) {
             const area = overlapArea(rect, prev);
-            if (area > 0) penalty += area + 8000;
+            if (area > 0) penalty += area * 8 + 50000;
           }
 
           // Don't cover other dots.
           for (let mi = 0; mi < markerRects.length; mi++) {
-            if (mi === index) continue; // ok to be close to its own dot
             const area = overlapArea(rect, markerRects[mi]);
-            if (area > 0) penalty += area * 8 + 30000;
+            if (area > 0) {
+              // Never cover its own dot.
+              if (mi === index) penalty += 1_000_000;
+              else penalty += area * 18 + 90_000;
+            }
           }
 
           // Don't cover distance labels.
           for (const dr of distanceRects) {
             const area = overlapArea(rect, dr);
-            if (area > 0) penalty += area * 6 + 25000;
+            if (area > 0) penalty += area * 22 + 120000;
           }
 
           // Prefer a closer label (smaller displacement)
-          penalty += Math.abs(c.dx) * 2 + Math.abs(c.dy) * 1.5;
+          penalty += Math.abs(clamped.dx) * 1.1 + Math.abs(clamped.dy) * 0.9;
 
           if (penalty < bestPenalty) {
             bestPenalty = penalty;
-            best = c;
+            best = { dx: clamped.dx, dy: clamped.dy };
             bestRect = rect;
           }
         }
