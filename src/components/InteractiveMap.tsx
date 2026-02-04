@@ -161,25 +161,21 @@ const InteractiveMap = () => {
         className: "city-label",
         html: `
           <div style="
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
             background: ${labelBgColor};
-            padding: 3px 6px;
+            padding: 4px 8px;
             border-radius: 4px;
             font-size: 10px;
             font-weight: 600;
             color: ${labelText};
             white-space: nowrap;
-            box-shadow: 0 2px 8px hsl(var(--foreground) / 0.25);
-            line-height: 1.2;
+            box-shadow: 0 3px 10px hsl(var(--foreground) / 0.3);
+            line-height: 1.3;
           ">
-            <div style="display: flex; align-items: baseline; gap: 2px;">
+            <div style="display: flex; align-items: baseline; gap: 3px;">
               <span>${cityName}</span>
               <span style="color: ${labelMuted}; font-weight: 500; font-size: 8px;">(${countryCode})</span>
             </div>
-            ${dateText ? `<div style="font-size: 8px; color: ${labelMuted}; font-weight: 400;">${dateText}</div>` : ""}
+            ${dateText ? `<div style="font-size: 9px; color: ${labelMuted}; font-weight: 500;">${dateText}</div>` : ""}
           </div>
         `,
         iconSize: [1, 1],
@@ -187,12 +183,18 @@ const InteractiveMap = () => {
       });
     };
 
-    // Create distance label icon with arrow parallel to route
-    const createDistanceIcon = (distanceNm: number, angleDeg: number) => {
+    // Create distance label icon with arrow parallel to route, arrow points in travel direction
+    const createDistanceIcon = (distanceNm: number, angleDeg: number, isFlipped: boolean) => {
       const text = `${distanceNm} miili`;
       
-      // Calculate arrow rotation - point in direction of travel
-      const arrowRotation = angleDeg;
+      // Label rotation for readability
+      let labelRotation = angleDeg;
+      if (labelRotation > 90) labelRotation -= 180;
+      if (labelRotation < -90) labelRotation += 180;
+      
+      // Arrow should point in original travel direction
+      // If label is flipped for readability, flip arrow too
+      const arrowFlip = isFlipped ? "scaleX(-1)" : "";
       
       return L.divIcon({
         className: "distance-label",
@@ -202,18 +204,19 @@ const InteractiveMap = () => {
             align-items: center;
             gap: 3px;
             background: ${markerColor};
-            padding: 2px 6px 2px 4px;
-            border-radius: 10px;
-            font-size: 8px;
+            padding: 3px 8px 3px 5px;
+            border-radius: 12px;
+            font-size: 9px;
             font-weight: 600;
             color: ${labelText};
             white-space: nowrap;
-            box-shadow: 0 1px 4px hsl(var(--foreground) / 0.2);
-            transform: rotate(${angleDeg}deg);
+            box-shadow: 0 2px 6px hsl(var(--foreground) / 0.25);
+            transform: rotate(${labelRotation}deg);
             transform-origin: center;
           ">
-            <svg width="10" height="8" viewBox="0 0 10 8" fill="none" style="transform: rotate(${-angleDeg + arrowRotation}deg);">
-              <path d="M6 1L9 4L6 7M1 4H9" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <svg width="12" height="8" viewBox="0 0 12 8" fill="none" style="transform: ${arrowFlip}; flex-shrink: 0;">
+              <path d="M7 1L11 4L7 7" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M1 4H10" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
             </svg>
             <span>${text}</span>
           </div>
@@ -272,7 +275,7 @@ const InteractiveMap = () => {
         cityLabelMarkersRef.current[idx].setIcon(createCityIcon(stage, offsetX, offsetY));
       });
 
-      // Place distance labels on route segments, parallel to line
+      // Place distance labels on route segments, parallel to line, ON the dotted line
       distanceLabelMarkersRef.current.forEach((seg) => {
         const i = seg.toIndex;
         const distance = mainStages[i].distanceFromPrevious || 0;
@@ -280,24 +283,23 @@ const InteractiveMap = () => {
         const p1 = displayPoints[i - 1];
         const p2 = displayPoints[i];
         
-        // Calculate midpoint of segment
+        // Calculate midpoint of segment (directly on the line)
         const midX = (p1.x + p2.x) / 2;
         const midY = (p1.y + p2.y) / 2;
         
-        // Calculate angle of the route segment
+        // Calculate angle of the route segment (travel direction: from p1 to p2)
         const dx = p2.x - p1.x;
         const dy = p2.y - p1.y;
-        let angleDeg = Math.atan2(dy, dx) * (180 / Math.PI);
+        const rawAngleDeg = Math.atan2(dy, dx) * (180 / Math.PI);
         
-        // Keep text readable (not upside down)
-        if (angleDeg > 90) angleDeg -= 180;
-        if (angleDeg < -90) angleDeg += 180;
+        // Check if we need to flip for readability
+        const isFlipped = rawAngleDeg > 90 || rawAngleDeg < -90;
         
-        // Position at midpoint
+        // Position at midpoint (directly on the dotted line)
         const midLatLng = map.containerPointToLatLng(L.point(midX, midY));
         
         seg.marker.setLatLng(midLatLng);
-        seg.marker.setIcon(createDistanceIcon(distance, angleDeg));
+        seg.marker.setIcon(createDistanceIcon(distance, rawAngleDeg, isFlipped));
       });
     };
 
