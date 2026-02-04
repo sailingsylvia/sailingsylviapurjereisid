@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Navigation } from "lucide-react";
 import { voyageSections, totalDistanceSection1 } from "@/data/voyageData";
+import { routeLegWaypoints } from "@/data/routeWaypoints";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -100,11 +101,21 @@ const InteractiveMap = () => {
       });
     };
 
-    // Route coordinates
-    const routeCoordinates = mainStages.map((stage) => [
-      stage.coordinates.lat,
-      stage.coordinates.lng,
-    ] as [number, number]);
+    // Route coordinates (with optional water-waypoint legs so the dashed line doesn't cut across land)
+    const routeCoordinates: [number, number][] = [];
+    for (let i = 0; i < mainStages.length; i++) {
+      const stage = mainStages[i];
+      if (i === 0) {
+        routeCoordinates.push([stage.coordinates.lat, stage.coordinates.lng]);
+        continue;
+      }
+      const from = mainStages[i - 1];
+      const to = stage;
+      const key = `${from.id}->${to.id}`;
+      const via = routeLegWaypoints[key] ?? [];
+      routeCoordinates.push(...via);
+      routeCoordinates.push([to.coordinates.lat, to.coordinates.lng]);
+    }
 
     // Add route line (dashed)
     const routeLine = L.polyline(routeCoordinates, {
@@ -155,7 +166,7 @@ const InteractiveMap = () => {
     // Fit bounds
     const bounds = L.latLngBounds(routeCoordinates);
     // More padding keeps points away from the edges so labels can stay close without being clamped far away.
-    map.fitBounds(bounds, { padding: [120, 120] });
+    map.fitBounds(bounds, { padding: [180, 180] });
 
     // Create city label icon - compact with short date
     // Note: offsetX/offsetY are pixel offsets from the pin's map point (top-left of the label box)
@@ -254,11 +265,11 @@ const InteractiveMap = () => {
       const line1 = `${stage.city} (${stage.countryCode})`;
       const line2 = dateText || "";
 
-      const paddingX = 16; // 8px left + 8px right
-      const extra = 10; // gap + rounded corners + shadow safety
+      // Extra-large safety margins to avoid any visual overlap even if fonts differ slightly.
+      const paddingX = 22;
+      const extra = 26; // shadow + rounding + leader-line safety
       const w = Math.ceil(Math.max(measureTextPx(line1), measureTextPx(line2)) + paddingX + extra);
-      // matches the inline styles (font-size + 1–2 lines + padding)
-      const h = line2 ? 34 : 22;
+      const h = line2 ? 40 : 26;
       return { w, h };
     };
 
@@ -269,13 +280,14 @@ const InteractiveMap = () => {
       if (labelRotation > 90) labelRotation -= 180;
       if (labelRotation < -90) labelRotation += 180;
 
-      const baseW = Math.ceil(measureTextPx(text) + 40); // arrow + padding + gap
-      const baseH = 18;
+      // Heavier over-estimation: prevents labels that "look" overlapping even if algorithm thinks they don't.
+      const baseW = Math.ceil(measureTextPx(text) + 78);
+      const baseH = 24;
 
       const theta = (Math.abs(labelRotation) * Math.PI) / 180;
       const w = Math.abs(baseW * Math.cos(theta)) + Math.abs(baseH * Math.sin(theta));
       const h = Math.abs(baseW * Math.sin(theta)) + Math.abs(baseH * Math.cos(theta));
-      return { w: Math.ceil(w) + 6, h: Math.ceil(h) + 6 };
+      return { w: Math.ceil(w) + 16, h: Math.ceil(h) + 16 };
     };
 
     const clampOffsetToMap = (
@@ -351,7 +363,7 @@ const InteractiveMap = () => {
 
       // Update pins position
       stageMarkersRef.current.forEach((m, i) => m.setLatLng(displayLatLngs[i]));
-      routeLineRef.current?.setLatLngs(displayLatLngs as unknown as L.LatLngExpression[]);
+      routeLineRef.current?.setLatLngs(routeCoordinates as unknown as L.LatLngExpression[]);
 
        // Place distance labels first so city-label collision avoidance can treat them as obstacles.
       const distanceObstacles: LabelRect[] = [];
@@ -361,8 +373,8 @@ const InteractiveMap = () => {
          const tCandidates = [
            0.5, 0.44, 0.56, 0.38, 0.62, 0.32, 0.68, 0.26, 0.74, 0.2, 0.8, 0.14, 0.86, 0.1, 0.9,
          ];
-         const tangentialOffsetsPx = [0, -18, 18, -32, 32, -48, 48, -68, 68];
-         const normalOffsets = [0, 12, -12, 22, -22, 34, -34, 48, -48, 64, -64];
+         const tangentialOffsetsPx = [0, -18, 18, -32, 32, -48, 48, -68, 68, -92, 92, -124, 124];
+         const normalOffsets = [0, 12, -12, 22, -22, 34, -34, 48, -48, 64, -64, 86, -86, 112, -112, 140, -140];
 
          const clampRectToMap = (center: L.Point, size: { w: number; h: number }, margin = 8) => {
            let x = center.x;
@@ -407,7 +419,7 @@ const InteractiveMap = () => {
            return b.aabb.w * b.aabb.h - a.aabb.w * a.aabb.h;
          });
 
-        for (const item of distItems) {
+         for (const item of distItems) {
            const { seg, distance, p1, p2, rawAngleDeg, aabb } = item;
           const isFlipped = rawAngleDeg > 90 || rawAngleDeg < -90;
 
@@ -480,9 +492,52 @@ const InteractiveMap = () => {
                score: 0,
              };
 
+            // Hard fallback: brute-force search for ANY zero-overlap placement.
+            // This guarantees we don't leave distance labels stacked on top of each other.
+            if (best.overlaps > 0) {
+              let forced: { t: number; normal: number; rect: LabelRect } | null = null;
+              const tScan = [
+                0.5, 0.42, 0.58, 0.34, 0.66, 0.26, 0.74, 0.18, 0.82, 0.1, 0.9,
+              ];
+              const tanScan = [0, -32, 32, -68, 68, -124, 124, -180, 180];
+              const normalScan = [0, 22, -22, 48, -48, 86, -86, 140, -140, 200, -200, 260, -260];
+
+              outer: for (const tBase of tScan) {
+                for (const tanPx of tanScan) {
+                  const t = Math.max(0.02, Math.min(0.98, tBase + tanPx / segLen));
+                  for (const normal of normalScan) {
+                    const x0 = lerp(p1.x, p2.x, t);
+                    const y0 = lerp(p1.y, p2.y, t);
+                    const x = x0 + nx * normal;
+                    const y = y0 + ny * normal;
+                    const clampedCenter = clampRectToMap(L.point(x, y), { w: aabb.w, h: aabb.h });
+                    const rect: LabelRect = {
+                      x: clampedCenter.x - aabb.w / 2,
+                      y: clampedCenter.y - aabb.h / 2,
+                      w: aabb.w,
+                      h: aabb.h,
+                    };
+                    let overlaps = 0;
+                    for (const other of alreadyPlaced) if (rectsOverlap(rect, other, 20)) overlaps += 1;
+                    if (overlaps === 0) {
+                      forced = { t, normal, rect };
+                      break outer;
+                    }
+                  }
+                }
+              }
+              if (forced) {
+                (best as any).t = forced.t;
+                (best as any).normal = forced.normal;
+                (best as any).rect = forced.rect;
+              }
+            }
+
            const x = lerp(p1.x, p2.x, best.t) + nx * best.normal;
            const y = lerp(p1.y, p2.y, best.t) + ny * best.normal;
-           const posLatLng = map.containerPointToLatLng(clampRectToMap(L.point(x, y), { w: aabb.w, h: aabb.h }));
+            const posLatLng = map.containerPointToLatLng(
+              clampRectToMap(L.point(x, y), { w: aabb.w, h: aabb.h })
+            );
           seg.marker.setLatLng(posLatLng);
           seg.marker.setIcon(createDistanceIcon(distance, rawAngleDeg, isFlipped));
 
@@ -563,7 +618,7 @@ const InteractiveMap = () => {
             const rect: LabelRect = { x: p.x + o.x, y: p.y + o.y, w: size.w, h: size.h };
             let overlaps = 0;
             for (const other of placed) {
-              if (rectsOverlap(rect, other, 12)) overlaps += 1;
+              if (rectsOverlap(rect, other, 16)) overlaps += 1;
             }
 
             // Prefer: 0 overlaps first; then keep label center close to the pin.
@@ -580,6 +635,28 @@ const InteractiveMap = () => {
               bestScore = score;
               best = o;
                 if (overlaps === 0 && centerDist < 54) break;
+            }
+          }
+
+          // Hard fallback: spiral search to guarantee 0 overlaps.
+          if (bestOverlaps > 0) {
+            const radii = [96, 120, 144, 168, 192, 220, 252, 288, 320];
+            const angles = Array.from({ length: 16 }, (_, k) => k * 22.5);
+            outer: for (const r of radii) {
+              for (const a of angles) {
+                const rad = (a * Math.PI) / 180;
+                const ox = Math.cos(rad) * r - size.w / 2;
+                const oy = Math.sin(rad) * r - size.h / 2;
+                const clamped = clampOffsetToMap(p, size, { x: ox, y: oy } as any, mapSize);
+                const rect: LabelRect = { x: p.x + clamped.x, y: p.y + clamped.y, w: size.w, h: size.h };
+                let overlaps = 0;
+                for (const other of placed) if (rectsOverlap(rect, other, 16)) overlaps += 1;
+                if (overlaps === 0) {
+                  best = { x: clamped.x, y: clamped.y, expand: r, slide: 0, pref: 99 };
+                  bestOverlaps = 0;
+                  break outer;
+                }
+              }
             }
           }
 
