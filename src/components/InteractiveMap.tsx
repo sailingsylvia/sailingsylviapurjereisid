@@ -153,6 +153,7 @@ const InteractiveMap = () => {
     map.fitBounds(bounds, { padding: [80, 80] });
 
     // Create city label icon - compact with short date
+    // Note: offsetX/offsetY are pixel offsets from the pin's map point (top-left of the label box)
     const createCityIcon = (stage: (typeof mainStages)[number], offsetX: number, offsetY: number) => {
       const dateText = stage.id === "roomassaare" ? "20. jul" : formatShortDate(stage.arrivalDate);
       const cityName = stage.city;
@@ -162,6 +163,8 @@ const InteractiveMap = () => {
         className: "city-label",
         html: `
           <div style="
+            transform: translate(${offsetX}px, ${offsetY}px);
+            will-change: transform;
             display: inline-flex;
             flex-direction: column;
             align-items: flex-start;
@@ -184,8 +187,47 @@ const InteractiveMap = () => {
           </div>
         `,
         iconSize: [1, 1],
-        iconAnchor: [-offsetX, -offsetY],
+        // Anchor at the pin point; we offset via CSS transform above.
+        iconAnchor: [0, 0],
       });
+    };
+
+    type LabelRect = { x: number; y: number; w: number; h: number };
+    const rectsOverlap = (a: LabelRect, b: LabelRect, pad = 6) => {
+      return !(
+        a.x + a.w + pad < b.x ||
+        b.x + b.w + pad < a.x ||
+        a.y + a.h + pad < b.y ||
+        b.y + b.h + pad < a.y
+      );
+    };
+
+    // Approximate label box size in pixels (fast + stable across zoom; avoids DOM reads)
+    const estimateCityLabelSize = (stage: (typeof mainStages)[number]) => {
+      const dateText = stage.id === "roomassaare" ? "20. jul" : formatShortDate(stage.arrivalDate);
+      const line1 = `${stage.city} (${stage.countryCode})`;
+      const line2 = dateText || "";
+      // Tuned for ~10px font-size + padding 4x8
+      const w = Math.max(line1.length * 6.2, line2.length * 6.0) + 18;
+      const h = (line2 ? 26 : 16) + 2;
+      return { w, h };
+    };
+
+    const clampOffsetToMap = (
+      p: L.Point,
+      size: { w: number; h: number },
+      offset: { x: number; y: number },
+      mapSize: L.Point,
+      margin = 6
+    ) => {
+      let x = offset.x;
+      let y = offset.y;
+      // keep label within container bounds
+      if (p.x + x < margin) x = margin - p.x;
+      if (p.y + y < margin) y = margin - p.y;
+      if (p.x + x + size.w > mapSize.x - margin) x = mapSize.x - margin - size.w - p.x;
+      if (p.y + y + size.h > mapSize.y - margin) y = mapSize.y - margin - size.h - p.y;
+      return { x, y };
     };
 
     // Create distance label icon with arrow parallel to route, arrow points in travel direction
@@ -243,43 +285,95 @@ const InteractiveMap = () => {
       routeLineRef.current?.setLatLngs(displayLatLngs as unknown as L.LatLngExpression[]);
 
       // Place city labels directly next to pins (bottom-right offset)
-      mainStages.forEach((stage, idx) => {
-        const p = displayPoints[idx];
-        
-        // Offset to position label directly below-right of pin
-        let offsetX = 8;
-        let offsetY = 4;
-        
-        // Adjust offset for crowded areas
-        if (stage.id === "ibiza") {
-          offsetX = 8;
-          offsetY = 20;
-        } else if (stage.id === "mallorca") {
-          offsetX = 8;
-          offsetY = -30;
-        } else if (stage.id === "sardiinia") {
-          offsetX = 8;
-          offsetY = 10;
-        } else if (stage.id === "orikum") {
-          offsetX = -90;
-          offsetY = 4;
-        } else if (stage.id === "korfu") {
-          offsetX = 8;
-          offsetY = 20;
-        } else if (stage.id === "moraira") {
-          offsetX = -80;
-          offsetY = 4;
-        } else if (stage.id === "brest") {
-          offsetX = -80;
-          offsetY = -10;
-        } else if (stage.id === "vilamoura") {
-          offsetX = -90;
-          offsetY = 10;
-        }
+      {
+        const mapSize = map.getSize();
+        const placed: LabelRect[] = [];
 
-        cityLabelMarkersRef.current[idx].setLatLng(displayLatLngs[idx]);
-        cityLabelMarkersRef.current[idx].setIcon(createCityIcon(stage, offsetX, offsetY));
-      });
+        const preferredOffsetForStage = (stage: (typeof mainStages)[number]) => {
+          // Default: slightly to the right and a bit above the pin's tip
+          let x = 10;
+          let y = -34;
+
+          // Keep a light hand on special cases; collision resolver will fine-tune.
+          if (stage.id === "ibiza") {
+            x = 10;
+            y = 18;
+          } else if (stage.id === "mallorca") {
+            x = 10;
+            y = -44;
+          } else if (stage.id === "sardiinia") {
+            x = 10;
+            y = -22;
+          } else if (stage.id === "orikum") {
+            x = -96;
+            y = -34;
+          } else if (stage.id === "korfu") {
+            x = 10;
+            y = 18;
+          } else if (stage.id === "moraira") {
+            x = -92;
+            y = -34;
+          } else if (stage.id === "brest") {
+            x = -92;
+            y = -44;
+          } else if (stage.id === "vilamoura") {
+            x = -96;
+            y = -22;
+          }
+          return { x, y };
+        };
+
+        const candidateOffsets = (preferred: { x: number; y: number }) => {
+          // Candidates are “top-left of label box” offsets from the pin point.
+          // Keep distances small so labels stay clearly attached to the correct pin.
+          return [
+            preferred,
+            { x: 10, y: -34 }, // NE (default)
+            { x: 10, y: 8 }, // SE
+            { x: -110, y: -34 }, // NW
+            { x: -110, y: 8 }, // SW
+            { x: 10, y: -52 }, // NE higher
+            { x: 10, y: 24 }, // SE lower
+            { x: -110, y: -52 }, // NW higher
+            { x: -110, y: 24 }, // SW lower
+          ];
+        };
+
+        mainStages.forEach((stage, idx) => {
+          const p = displayPoints[idx];
+          const size = estimateCityLabelSize(stage);
+          const preferred = preferredOffsetForStage(stage);
+          const candidates = candidateOffsets(preferred).map((o) =>
+            clampOffsetToMap(p, size, o, mapSize)
+          );
+
+          let best = candidates[0];
+          let bestScore = Number.POSITIVE_INFINITY;
+
+          for (const o of candidates) {
+            const rect: LabelRect = { x: p.x + o.x, y: p.y + o.y, w: size.w, h: size.h };
+            let overlaps = 0;
+            for (const other of placed) {
+              if (rectsOverlap(rect, other, 8)) overlaps += 1;
+            }
+
+            // Score: 0 overlaps preferred; otherwise prefer fewer overlaps and smaller move from preferred.
+            const movePenalty = Math.hypot(o.x - preferred.x, o.y - preferred.y) / 20;
+            const score = overlaps * 100 + movePenalty;
+
+            if (score < bestScore) {
+              bestScore = score;
+              best = o;
+              if (overlaps === 0) break;
+            }
+          }
+
+          placed.push({ x: p.x + best.x, y: p.y + best.y, w: size.w, h: size.h });
+
+          cityLabelMarkersRef.current[idx].setLatLng(displayLatLngs[idx]);
+          cityLabelMarkersRef.current[idx].setIcon(createCityIcon(stage, best.x, best.y));
+        });
+      }
 
       // Place distance labels on route segments, parallel to line, ON the dotted line
       distanceLabelMarkersRef.current.forEach((seg) => {
