@@ -60,6 +60,10 @@ const InteractiveMap = () => {
     const labelMuted = "hsl(var(--primary-foreground) / 0.78)";
     const labelText = "hsl(var(--primary-foreground))";
 
+    // Our pin icon is anchored at the tip; visually the “point” users associate with is higher (near the inner circle).
+    // Shift label computations up a bit so labels sit closer to the visible blue marker head (like the reference sample).
+    const pinHeadOffsetY = -18;
+
     // Panes for layering
     map.createPane("routeLine");
     const routePane = map.getPane("routeLine");
@@ -150,7 +154,8 @@ const InteractiveMap = () => {
 
     // Fit bounds
     const bounds = L.latLngBounds(routeCoordinates);
-    map.fitBounds(bounds, { padding: [80, 80] });
+    // More padding keeps points away from the edges so labels can stay close without being clamped far away.
+    map.fitBounds(bounds, { padding: [120, 120] });
 
     // Create city label icon - compact with short date
     // Note: offsetX/offsetY are pixel offsets from the pin's map point (top-left of the label box)
@@ -173,8 +178,9 @@ const InteractiveMap = () => {
               leaderLineTo
                 ? `
               <svg width="1" height="1" style="position:absolute; left:0; top:0; overflow: visible; pointer-events:none;">
-                <line x1="0" y1="0" x2="${leaderLineTo.x}" y2="${leaderLineTo.y}"
-                  stroke="hsl(var(--foreground) / 0.35)" stroke-width="1" stroke-dasharray="2 3" />
+                 <line x1="0" y1="${pinHeadOffsetY}" x2="${leaderLineTo.x}" y2="${leaderLineTo.y}"
+                   stroke="hsl(var(--foreground) / 0.45)" stroke-width="1.25" stroke-dasharray="2 3" />
+                 <circle cx="${leaderLineTo.x}" cy="${leaderLineTo.y}" r="2" fill="hsl(var(--foreground) / 0.45)" />
               </svg>
             `
                 : ""
@@ -351,8 +357,12 @@ const InteractiveMap = () => {
       const distanceObstacles: LabelRect[] = [];
       {
         const alreadyPlaced: LabelRect[] = [];
-         const tCandidates = [0.5, 0.42, 0.58, 0.35, 0.65, 0.28, 0.72, 0.22, 0.78, 0.16, 0.84, 0.12, 0.88];
-         const normalOffsets = [0, 10, -10, 18, -18];
+         // More candidates to avoid distance-label stacking in dense areas (Ibiza/Mallorca etc.)
+         const tCandidates = [
+           0.5, 0.44, 0.56, 0.38, 0.62, 0.32, 0.68, 0.26, 0.74, 0.2, 0.8, 0.14, 0.86, 0.1, 0.9,
+         ];
+         const tangentialOffsetsPx = [0, -18, 18, -32, 32, -48, 48, -68, 68];
+         const normalOffsets = [0, 12, -12, 22, -22, 34, -34, 48, -48, 64, -64];
 
          const clampRectToMap = (center: L.Point, size: { w: number; h: number }, margin = 8) => {
            let x = center.x;
@@ -408,44 +418,48 @@ const InteractiveMap = () => {
            const nx = -segDy / segLen;
            const ny = segDx / segLen;
 
-          const pickBest = (minEndPadPx: number) => {
+           const pickBest = (minEndPadPx: number) => {
              let best: { t: number; normal: number; rect: LabelRect; overlaps: number; score: number } | null = null;
 
-            for (const t of tCandidates) {
-               for (const normal of normalOffsets) {
-                 const x0 = lerp(p1.x, p2.x, t);
-                 const y0 = lerp(p1.y, p2.y, t);
-                 const x = x0 + nx * normal;
-                 const y = y0 + ny * normal;
+             for (const tBase of tCandidates) {
+               for (const tanPx of tangentialOffsetsPx) {
+                 const t = Math.max(0.02, Math.min(0.98, tBase + tanPx / segLen));
 
-                 const pt = L.point(x0, y0);
-                 if (minEndPadPx > 0) {
-                   if (distPx(pt, p1) < minEndPadPx || distPx(pt, p2) < minEndPadPx) continue;
-                 }
+                 for (const normal of normalOffsets) {
+                   const x0 = lerp(p1.x, p2.x, t);
+                   const y0 = lerp(p1.y, p2.y, t);
+                   const x = x0 + nx * normal;
+                   const y = y0 + ny * normal;
 
-                 const clampedCenter = clampRectToMap(L.point(x, y), { w: aabb.w, h: aabb.h });
-                 const rect: LabelRect = {
-                   x: clampedCenter.x - aabb.w / 2,
-                   y: clampedCenter.y - aabb.h / 2,
-                   w: aabb.w,
-                   h: aabb.h,
-                 };
+                   const pt = L.point(x0, y0);
+                   if (minEndPadPx > 0) {
+                     if (distPx(pt, p1) < minEndPadPx || distPx(pt, p2) < minEndPadPx) continue;
+                   }
 
-                 let overlaps = 0;
-                 for (const other of alreadyPlaced) {
-                   if (rectsOverlap(rect, other, 12)) overlaps += 1;
-                 }
+                   const clampedCenter = clampRectToMap(L.point(x, y), { w: aabb.w, h: aabb.h });
+                   const rect: LabelRect = {
+                     x: clampedCenter.x - aabb.w / 2,
+                     y: clampedCenter.y - aabb.h / 2,
+                     w: aabb.w,
+                     h: aabb.h,
+                   };
 
-                 // Always prefer fewer overlaps; tie-break with staying near midpoint and on the line.
-                 const shift = Math.abs(t - 0.5);
-                 const score = overlaps * 1_000_000 + shift * 1200 + Math.abs(normal) * 18;
+                   let overlaps = 0;
+                   for (const other of alreadyPlaced) {
+                     if (rectsOverlap(rect, other, 16)) overlaps += 1;
+                   }
 
-                 if (!best || score < best.score) {
-                   best = { t, normal, rect, overlaps, score };
-                   if (overlaps === 0 && shift < 0.18 && Math.abs(normal) <= 10) return best;
+                   // Prefer: 0 overlaps, then stay near segment midpoint and near the line.
+                   const shift = Math.abs(t - 0.5);
+                   const score = overlaps * 1_000_000 + shift * 1500 + Math.abs(normal) * 18 + Math.abs(tanPx) * 2.2;
+
+                   if (!best || score < best.score) {
+                     best = { t, normal, rect, overlaps, score };
+                     if (overlaps === 0 && shift < 0.16 && Math.abs(normal) <= 12 && Math.abs(tanPx) <= 18) return best;
+                   }
                  }
                }
-            }
+             }
 
             return best;
           };
@@ -485,20 +499,21 @@ const InteractiveMap = () => {
          const candidateOffsetsFor = (size: { w: number; h: number }): CityCandidate[] => {
            // Offsets are “top-left of label box” relative to the pin's container point.
            // Strategy: try near-the-pin placements first; then expand outward along the same direction.
-           const gap = 12;
+            const gap = 12;
            const base = [
              // Preferred: above the pin (like the sample), then corners, then sides.
-             { pref: 0, x: 12, y: -size.h - gap, dir: { x: 1, y: -1 }, perp: { x: 1, y: 1 } }, // top-right
-             { pref: 1, x: -size.w - 12, y: -size.h - gap, dir: { x: -1, y: -1 }, perp: { x: 1, y: -1 } }, // top-left
-             { pref: 2, x: -size.w / 2, y: -size.h - 16, dir: { x: 0, y: -1 }, perp: { x: 1, y: 0 } }, // centered top
-             { pref: 3, x: 12, y: gap, dir: { x: 1, y: 1 }, perp: { x: 1, y: -1 } }, // bottom-right
-             { pref: 4, x: -size.w - 12, y: gap, dir: { x: -1, y: 1 }, perp: { x: 1, y: 1 } }, // bottom-left
-             { pref: 5, x: -size.w / 2, y: 16, dir: { x: 0, y: 1 }, perp: { x: 1, y: 0 } }, // centered bottom
-             { pref: 6, x: 16, y: -size.h / 2, dir: { x: 1, y: 0 }, perp: { x: 0, y: 1 } }, // centered right
-             { pref: 7, x: -size.w - 16, y: -size.h / 2, dir: { x: -1, y: 0 }, perp: { x: 0, y: 1 } }, // centered left
+              { pref: 0, x: 12, y: pinHeadOffsetY - size.h - gap, dir: { x: 1, y: -1 }, perp: { x: 1, y: 1 } }, // top-right
+              { pref: 1, x: -size.w - 12, y: pinHeadOffsetY - size.h - gap, dir: { x: -1, y: -1 }, perp: { x: 1, y: -1 } }, // top-left
+              { pref: 2, x: -size.w / 2, y: pinHeadOffsetY - size.h - 16, dir: { x: 0, y: -1 }, perp: { x: 1, y: 0 } }, // centered top
+              { pref: 3, x: 12, y: pinHeadOffsetY + gap, dir: { x: 1, y: 1 }, perp: { x: 1, y: -1 } }, // bottom-right
+              { pref: 4, x: -size.w - 12, y: pinHeadOffsetY + gap, dir: { x: -1, y: 1 }, perp: { x: 1, y: 1 } }, // bottom-left
+              { pref: 5, x: -size.w / 2, y: pinHeadOffsetY + 16, dir: { x: 0, y: 1 }, perp: { x: 1, y: 0 } }, // centered bottom
+              { pref: 6, x: 16, y: pinHeadOffsetY - size.h / 2, dir: { x: 1, y: 0 }, perp: { x: 0, y: 1 } }, // centered right
+              { pref: 7, x: -size.w - 16, y: pinHeadOffsetY - size.h / 2, dir: { x: -1, y: 0 }, perp: { x: 0, y: 1 } }, // centered left
            ] as const;
 
-           const expansions = [0, 12, 24, 36, 48, 60, 72, 84];
+            // Keep labels close by default; only expand further when needed to avoid overlaps.
+            const expansions = [0, 10, 20, 30, 42, 54, 68, 84];
            const slides = [0, -12, 12, -24, 24, -36, 36];
            const out: CityCandidate[] = [];
            const seen = new Set<string>();
@@ -548,23 +563,23 @@ const InteractiveMap = () => {
             const rect: LabelRect = { x: p.x + o.x, y: p.y + o.y, w: size.w, h: size.h };
             let overlaps = 0;
             for (const other of placed) {
-              if (rectsOverlap(rect, other, 10)) overlaps += 1;
+              if (rectsOverlap(rect, other, 12)) overlaps += 1;
             }
 
             // Prefer: 0 overlaps first; then keep label center close to the pin.
             const centerDist = Math.hypot(o.x + size.w / 2, o.y + size.h / 2);
              const score =
                (overlaps > 0 ? overlaps * 1_000_000 : 0) +
-               centerDist * 1.15 +
+                centerDist * 1.8 +
                o.pref * 6 +
                Math.abs(o.slide) * 0.15 +
-               o.expand * 0.35;
+                o.expand * 0.8;
 
             if (overlaps < bestOverlaps || (overlaps === bestOverlaps && score < bestScore)) {
               bestOverlaps = overlaps;
               bestScore = score;
               best = o;
-               if (overlaps === 0 && centerDist < 62) break;
+                if (overlaps === 0 && centerDist < 54) break;
             }
           }
 
@@ -572,7 +587,7 @@ const InteractiveMap = () => {
           cityLabelMarkersRef.current[idx].setLatLng(displayLatLngs[idx]);
 
            const bestCenterDist = Math.hypot(best.x + size.w / 2, best.y + size.h / 2);
-           const showLeader = bestCenterDist > 78;
+           const showLeader = bestCenterDist > 58;
            cityLabelMarkersRef.current[idx].setIcon(
              createCityIcon(
                stage,
@@ -637,7 +652,7 @@ const InteractiveMap = () => {
         >
           <div
             ref={mapRef}
-            className="w-full h-[500px] md:h-[600px]"
+            className="w-full h-[560px] md:h-[720px] lg:h-[780px]"
             style={{ zIndex: 0 }}
           />
         </motion.div>
