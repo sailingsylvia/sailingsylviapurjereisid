@@ -202,15 +202,56 @@ const InteractiveMap = () => {
       );
     };
 
-    // Approximate label box size in pixels (fast + stable across zoom; avoids DOM reads)
+    // Conservative text measurement (no DOM reads) to avoid under-estimating label size.
+    // Over-estimation is preferred: it prevents labels from visually overlapping.
+    const fontFamily = (() => {
+      try {
+        return window.getComputedStyle(map.getContainer()).fontFamily || "system-ui, sans-serif";
+      } catch {
+        return "system-ui, sans-serif";
+      }
+    })();
+
+    const measureTextPx = (() => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      // Use 10px for both lines to intentionally over-estimate a bit.
+      const font = `600 10px ${fontFamily}`;
+      return (text: string) => {
+        if (!text) return 0;
+        if (!ctx) return text.length * 7.2;
+        ctx.font = font;
+        return ctx.measureText(text).width;
+      };
+    })();
+
     const estimateCityLabelSize = (stage: (typeof mainStages)[number]) => {
       const dateText = stage.id === "roomassaare" ? "20. jul" : formatShortDate(stage.arrivalDate);
       const line1 = `${stage.city} (${stage.countryCode})`;
       const line2 = dateText || "";
-      // Tuned for ~10px font-size + padding 4x8
-      const w = Math.max(line1.length * 6.2, line2.length * 6.0) + 18;
-      const h = (line2 ? 26 : 16) + 2;
+
+      const paddingX = 16; // 8px left + 8px right
+      const extra = 10; // gap + rounded corners + shadow safety
+      const w = Math.ceil(Math.max(measureTextPx(line1), measureTextPx(line2)) + paddingX + extra);
+      // matches the inline styles (font-size + 1–2 lines + padding)
+      const h = line2 ? 34 : 22;
       return { w, h };
+    };
+
+    const estimateDistanceLabelAabb = (distanceNm: number, rawAngleDeg: number) => {
+      const text = `${distanceNm} miili`;
+      // Mirror the readability rotation used inside createDistanceIcon
+      let labelRotation = rawAngleDeg;
+      if (labelRotation > 90) labelRotation -= 180;
+      if (labelRotation < -90) labelRotation += 180;
+
+      const baseW = Math.ceil(measureTextPx(text) + 40); // arrow + padding + gap
+      const baseH = 18;
+
+      const theta = (Math.abs(labelRotation) * Math.PI) / 180;
+      const w = Math.abs(baseW * Math.cos(theta)) + Math.abs(baseH * Math.sin(theta));
+      const h = Math.abs(baseW * Math.sin(theta)) + Math.abs(baseH * Math.cos(theta));
+      return { w: Math.ceil(w) + 6, h: Math.ceil(h) + 6 };
     };
 
     const clampOffsetToMap = (
@@ -284,10 +325,41 @@ const InteractiveMap = () => {
       stageMarkersRef.current.forEach((m, i) => m.setLatLng(displayLatLngs[i]));
       routeLineRef.current?.setLatLngs(displayLatLngs as unknown as L.LatLngExpression[]);
 
+      // Place distance labels first so city-label collision avoidance can treat them as obstacles.
+      const distanceObstacles: LabelRect[] = [];
+      distanceLabelMarkersRef.current.forEach((seg) => {
+        const i = seg.toIndex;
+        const distance = mainStages[i].distanceFromPrevious || 0;
+
+        const p1 = displayPoints[i - 1];
+        const p2 = displayPoints[i];
+
+        const midX = (p1.x + p2.x) / 2;
+        const midY = (p1.y + p2.y) / 2;
+
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const rawAngleDeg = Math.atan2(dy, dx) * (180 / Math.PI);
+        const isFlipped = rawAngleDeg > 90 || rawAngleDeg < -90;
+
+        const midLatLng = map.containerPointToLatLng(L.point(midX, midY));
+        seg.marker.setLatLng(midLatLng);
+        seg.marker.setIcon(createDistanceIcon(distance, rawAngleDeg, isFlipped));
+
+        // Conservative AABB obstacle (axis-aligned) so city labels won't cover distance pills.
+        const aabb = estimateDistanceLabelAabb(distance, rawAngleDeg);
+        distanceObstacles.push({
+          x: midX - aabb.w / 2,
+          y: midY - aabb.h / 2,
+          w: aabb.w,
+          h: aabb.h,
+        });
+      });
+
       // Place city labels directly next to pins (bottom-right offset)
       {
         const mapSize = map.getSize();
-        const placed: LabelRect[] = [];
+        const placed: LabelRect[] = [...distanceObstacles];
 
         const preferredOffsetForStage = (stage: (typeof mainStages)[number]) => {
           // Default: slightly to the right and a bit above the pin's tip
@@ -325,18 +397,32 @@ const InteractiveMap = () => {
 
         const candidateOffsets = (preferred: { x: number; y: number }) => {
           // Candidates are “top-left of label box” offsets from the pin point.
-          // Keep distances small so labels stay clearly attached to the correct pin.
-          return [
-            preferred,
-            { x: 10, y: -34 }, // NE (default)
-            { x: 10, y: 8 }, // SE
-            { x: -110, y: -34 }, // NW
-            { x: -110, y: 8 }, // SW
-            { x: 10, y: -52 }, // NE higher
-            { x: 10, y: 24 }, // SE lower
-            { x: -110, y: -52 }, // NW higher
-            { x: -110, y: 24 }, // SW lower
+          // Generate a small spiral around the preferred position to reliably escape tight clusters.
+          const dirs = [
+            { x: 0, y: 0 },
+            { x: 0, y: -1 },
+            { x: 1, y: -1 },
+            { x: -1, y: -1 },
+            { x: 1, y: 0 },
+            { x: -1, y: 0 },
+            { x: 1, y: 1 },
+            { x: -1, y: 1 },
+            { x: 0, y: 1 },
           ];
+          const radii = [0, 14, 28, 42, 56, 70, 84];
+          const out: Array<{ x: number; y: number }> = [];
+          const seen = new Set<string>();
+          for (const r of radii) {
+            for (const d of dirs) {
+              if (r === 0 && (d.x !== 0 || d.y !== 0)) continue;
+              const o = { x: preferred.x + d.x * r, y: preferred.y + d.y * r };
+              const key = `${Math.round(o.x)}:${Math.round(o.y)}`;
+              if (seen.has(key)) continue;
+              seen.add(key);
+              out.push(o);
+            }
+          }
+          return out;
         };
 
         mainStages.forEach((stage, idx) => {
@@ -354,7 +440,7 @@ const InteractiveMap = () => {
             const rect: LabelRect = { x: p.x + o.x, y: p.y + o.y, w: size.w, h: size.h };
             let overlaps = 0;
             for (const other of placed) {
-              if (rectsOverlap(rect, other, 8)) overlaps += 1;
+              if (rectsOverlap(rect, other, 10)) overlaps += 1;
             }
 
             // Score: 0 overlaps preferred; otherwise prefer fewer overlaps and smaller move from preferred.
@@ -374,33 +460,6 @@ const InteractiveMap = () => {
           cityLabelMarkersRef.current[idx].setIcon(createCityIcon(stage, best.x, best.y));
         });
       }
-
-      // Place distance labels on route segments, parallel to line, ON the dotted line
-      distanceLabelMarkersRef.current.forEach((seg) => {
-        const i = seg.toIndex;
-        const distance = mainStages[i].distanceFromPrevious || 0;
-
-        const p1 = displayPoints[i - 1];
-        const p2 = displayPoints[i];
-        
-        // Calculate midpoint of segment (directly on the line)
-        const midX = (p1.x + p2.x) / 2;
-        const midY = (p1.y + p2.y) / 2;
-        
-        // Calculate angle of the route segment (travel direction: from p1 to p2)
-        const dx = p2.x - p1.x;
-        const dy = p2.y - p1.y;
-        const rawAngleDeg = Math.atan2(dy, dx) * (180 / Math.PI);
-        
-        // Check if we need to flip for readability
-        const isFlipped = rawAngleDeg > 90 || rawAngleDeg < -90;
-        
-        // Position at midpoint (directly on the dotted line)
-        const midLatLng = map.containerPointToLatLng(L.point(midX, midY));
-        
-        seg.marker.setLatLng(midLatLng);
-        seg.marker.setIcon(createDistanceIcon(distance, rawAngleDeg, isFlipped));
-      });
     };
 
     map.on("zoomend", rerenderAll);
