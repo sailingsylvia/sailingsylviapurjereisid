@@ -56,7 +56,8 @@ const InteractiveMap = () => {
     // Colors from design tokens
     const markerColor = "hsl(var(--ocean-light))";
     const labelBgColor = "hsl(var(--foreground) / 0.92)";
-    const labelMuted = "hsl(var(--muted-foreground))";
+    // Use a light muted tone on the dark label background (keeps contrast on the map)
+    const labelMuted = "hsl(var(--primary-foreground) / 0.78)";
     const labelText = "hsl(var(--primary-foreground))";
 
     // Panes for layering
@@ -161,6 +162,10 @@ const InteractiveMap = () => {
         className: "city-label",
         html: `
           <div style="
+            display: inline-flex;
+            flex-direction: column;
+            align-items: flex-start;
+            width: max-content;
             background: ${labelBgColor};
             padding: 4px 8px;
             border-radius: 4px;
@@ -211,7 +216,8 @@ const InteractiveMap = () => {
             color: ${labelText};
             white-space: nowrap;
             box-shadow: 0 2px 6px hsl(var(--foreground) / 0.25);
-            transform: rotate(${labelRotation}deg);
+            /* Center the pill exactly on the dotted line midpoint */
+            transform: translate(-50%, -50%) rotate(${labelRotation}deg);
             transform-origin: center;
           ">
             <svg width="12" height="8" viewBox="0 0 12 8" fill="none" style="transform: ${arrowFlip}; flex-shrink: 0;">
