@@ -320,6 +320,10 @@ const InteractiveMap = () => {
         map.latLngToContainerPoint([s.coordinates.lat, s.coordinates.lng])
       );
       const displayLatLngs = mainStages.map(s => L.latLng(s.coordinates.lat, s.coordinates.lng));
+      const mapSize = map.getSize();
+
+      const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+      const distPx = (a: L.Point, b: L.Point) => Math.hypot(a.x - b.x, a.y - b.y);
 
       // Update pins position
       stageMarkersRef.current.forEach((m, i) => m.setLatLng(displayLatLngs[i]));
@@ -327,95 +331,123 @@ const InteractiveMap = () => {
 
       // Place distance labels first so city-label collision avoidance can treat them as obstacles.
       const distanceObstacles: LabelRect[] = [];
-      distanceLabelMarkersRef.current.forEach((seg) => {
-        const i = seg.toIndex;
-        const distance = mainStages[i].distanceFromPrevious || 0;
+      {
+        const alreadyPlaced: LabelRect[] = [];
+        const tCandidates = [0.5, 0.42, 0.58, 0.35, 0.65, 0.28, 0.72, 0.22, 0.78];
 
-        const p1 = displayPoints[i - 1];
-        const p2 = displayPoints[i];
+        // Place larger pills first (more robust in tight areas)
+        const distItems = distanceLabelMarkersRef.current
+          .map((seg) => {
+            const i = seg.toIndex;
+            const distance = mainStages[i].distanceFromPrevious || 0;
+            const p1 = displayPoints[i - 1];
+            const p2 = displayPoints[i];
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            const rawAngleDeg = Math.atan2(dy, dx) * (180 / Math.PI);
+            const aabb = estimateDistanceLabelAabb(distance, rawAngleDeg);
+            return { seg, i, distance, p1, p2, rawAngleDeg, aabb };
+          })
+          .sort((a, b) => b.aabb.w * b.aabb.h - a.aabb.w * a.aabb.h);
 
-        const midX = (p1.x + p2.x) / 2;
-        const midY = (p1.y + p2.y) / 2;
+        for (const item of distItems) {
+          const { seg, distance, p1, p2, rawAngleDeg, aabb } = item;
+          const isFlipped = rawAngleDeg > 90 || rawAngleDeg < -90;
 
-        const dx = p2.x - p1.x;
-        const dy = p2.y - p1.y;
-        const rawAngleDeg = Math.atan2(dy, dx) * (180 / Math.PI);
-        const isFlipped = rawAngleDeg > 90 || rawAngleDeg < -90;
+          const pickBest = (minEndPadPx: number) => {
+            let best: { t: number; rect: LabelRect; overlaps: number } | null = null;
 
-        const midLatLng = map.containerPointToLatLng(L.point(midX, midY));
-        seg.marker.setLatLng(midLatLng);
-        seg.marker.setIcon(createDistanceIcon(distance, rawAngleDeg, isFlipped));
+            for (const t of tCandidates) {
+              const x = lerp(p1.x, p2.x, t);
+              const y = lerp(p1.y, p2.y, t);
 
-        // Conservative AABB obstacle (axis-aligned) so city labels won't cover distance pills.
-        const aabb = estimateDistanceLabelAabb(distance, rawAngleDeg);
-        distanceObstacles.push({
-          x: midX - aabb.w / 2,
-          y: midY - aabb.h / 2,
-          w: aabb.w,
-          h: aabb.h,
-        });
-      });
+              const pt = L.point(x, y);
+              if (minEndPadPx > 0) {
+                if (distPx(pt, p1) < minEndPadPx || distPx(pt, p2) < minEndPadPx) continue;
+              }
+
+              const rect: LabelRect = {
+                x: x - aabb.w / 2,
+                y: y - aabb.h / 2,
+                w: aabb.w,
+                h: aabb.h,
+              };
+
+              let overlaps = 0;
+              for (const other of alreadyPlaced) {
+                if (rectsOverlap(rect, other, 10)) overlaps += 1;
+              }
+
+              if (!best) {
+                best = { t, rect, overlaps };
+                if (overlaps === 0) break;
+                continue;
+              }
+
+              // Always prefer fewer overlaps; tie-break with staying near midpoint.
+              const bestShift = Math.abs(best.t - 0.5);
+              const thisShift = Math.abs(t - 0.5);
+              if (overlaps < best.overlaps || (overlaps === best.overlaps && thisShift < bestShift)) {
+                best = { t, rect, overlaps };
+                if (overlaps === 0) break;
+              }
+            }
+
+            return best;
+          };
+
+          const best = pickBest(46) ?? pickBest(28) ?? pickBest(0) ?? {
+            t: 0.5,
+            rect: {
+              x: (p1.x + p2.x) / 2 - aabb.w / 2,
+              y: (p1.y + p2.y) / 2 - aabb.h / 2,
+              w: aabb.w,
+              h: aabb.h,
+            },
+            overlaps: 0,
+          };
+
+          const x = lerp(p1.x, p2.x, best.t);
+          const y = lerp(p1.y, p2.y, best.t);
+          const posLatLng = map.containerPointToLatLng(L.point(x, y));
+          seg.marker.setLatLng(posLatLng);
+          seg.marker.setIcon(createDistanceIcon(distance, rawAngleDeg, isFlipped));
+
+          alreadyPlaced.push(best.rect);
+          distanceObstacles.push(best.rect);
+        }
+      }
 
       // Place city labels directly next to pins (bottom-right offset)
       {
-        const mapSize = map.getSize();
         const placed: LabelRect[] = [...distanceObstacles];
 
-        const preferredOffsetForStage = (stage: (typeof mainStages)[number]) => {
-          // Default: slightly to the right and a bit above the pin's tip
-          let x = 10;
-          let y = -34;
-
-          // Keep a light hand on special cases; collision resolver will fine-tune.
-          if (stage.id === "ibiza") {
-            x = 10;
-            y = 18;
-          } else if (stage.id === "mallorca") {
-            x = 10;
-            y = -44;
-          } else if (stage.id === "sardiinia") {
-            x = 10;
-            y = -22;
-          } else if (stage.id === "orikum") {
-            x = -96;
-            y = -34;
-          } else if (stage.id === "korfu") {
-            x = 10;
-            y = 18;
-          } else if (stage.id === "moraira") {
-            x = -92;
-            y = -34;
-          } else if (stage.id === "brest") {
-            x = -92;
-            y = -44;
-          } else if (stage.id === "vilamoura") {
-            x = -96;
-            y = -22;
-          }
-          return { x, y };
-        };
-
-        const candidateOffsets = (preferred: { x: number; y: number }) => {
-          // Candidates are “top-left of label box” offsets from the pin point.
-          // Generate a small spiral around the preferred position to reliably escape tight clusters.
-          const dirs = [
-            { x: 0, y: 0 },
-            { x: 0, y: -1 },
-            { x: 1, y: -1 },
-            { x: -1, y: -1 },
-            { x: 1, y: 0 },
-            { x: -1, y: 0 },
-            { x: 1, y: 1 },
-            { x: -1, y: 1 },
-            { x: 0, y: 1 },
+        const candidateOffsetsFor = (size: { w: number; h: number }) => {
+          // Offsets are “top-left of label box” relative to the pin's latlng point.
+          // Keep everything near the pin; switch sides before moving far away.
+          const base = [
+            { x: 12, y: -size.h - 12 }, // top-right
+            { x: -size.w - 12, y: -size.h - 12 }, // top-left
+            { x: 12, y: 12 }, // bottom-right
+            { x: -size.w - 12, y: 12 }, // bottom-left
+            { x: -size.w / 2, y: -size.h - 16 }, // centered top
+            { x: -size.w / 2, y: 16 }, // centered bottom
           ];
-          const radii = [0, 14, 28, 42, 56, 70, 84];
+          const nudges = [
+            { dx: 0, dy: 0 },
+            { dx: 0, dy: -12 },
+            { dx: 0, dy: 12 },
+            { dx: -12, dy: 0 },
+            { dx: 12, dy: 0 },
+            { dx: 0, dy: -24 },
+            { dx: 0, dy: 24 },
+          ];
+
           const out: Array<{ x: number; y: number }> = [];
           const seen = new Set<string>();
-          for (const r of radii) {
-            for (const d of dirs) {
-              if (r === 0 && (d.x !== 0 || d.y !== 0)) continue;
-              const o = { x: preferred.x + d.x * r, y: preferred.y + d.y * r };
+          for (const b of base) {
+            for (const n of nudges) {
+              const o = { x: b.x + n.dx, y: b.y + n.dy };
               const key = `${Math.round(o.x)}:${Math.round(o.y)}`;
               if (seen.has(key)) continue;
               seen.add(key);
@@ -425,15 +457,26 @@ const InteractiveMap = () => {
           return out;
         };
 
-        mainStages.forEach((stage, idx) => {
+        // Place dense clusters first so they get the best nearby slots.
+        const cityIndices = mainStages.map((_, i) => i);
+        const neighborDistance = (i: number) => {
+          let best = Number.POSITIVE_INFINITY;
+          for (let j = 0; j < displayPoints.length; j++) {
+            if (j === i) continue;
+            best = Math.min(best, distPx(displayPoints[i], displayPoints[j]));
+          }
+          return best;
+        };
+        cityIndices.sort((a, b) => neighborDistance(a) - neighborDistance(b));
+
+        for (const idx of cityIndices) {
+          const stage = mainStages[idx];
           const p = displayPoints[idx];
           const size = estimateCityLabelSize(stage);
-          const preferred = preferredOffsetForStage(stage);
-          const candidates = candidateOffsets(preferred).map((o) =>
-            clampOffsetToMap(p, size, o, mapSize)
-          );
+          const candidates = candidateOffsetsFor(size).map((o) => clampOffsetToMap(p, size, o, mapSize));
 
           let best = candidates[0];
+          let bestOverlaps = Number.POSITIVE_INFINITY;
           let bestScore = Number.POSITIVE_INFINITY;
 
           for (const o of candidates) {
@@ -443,22 +486,22 @@ const InteractiveMap = () => {
               if (rectsOverlap(rect, other, 10)) overlaps += 1;
             }
 
-            // Score: 0 overlaps preferred; otherwise prefer fewer overlaps and smaller move from preferred.
-            const movePenalty = Math.hypot(o.x - preferred.x, o.y - preferred.y) / 20;
-            const score = overlaps * 100 + movePenalty;
+            // Prefer: 0 overlaps first; then keep label center close to the pin.
+            const centerDist = Math.hypot(o.x + size.w / 2, o.y + size.h / 2);
+            const score = (overlaps > 0 ? overlaps * 1_000_000 : 0) + centerDist;
 
-            if (score < bestScore) {
+            if (overlaps < bestOverlaps || (overlaps === bestOverlaps && score < bestScore)) {
+              bestOverlaps = overlaps;
               bestScore = score;
               best = o;
-              if (overlaps === 0) break;
+              if (overlaps === 0 && centerDist < 60) break;
             }
           }
 
           placed.push({ x: p.x + best.x, y: p.y + best.y, w: size.w, h: size.h });
-
           cityLabelMarkersRef.current[idx].setLatLng(displayLatLngs[idx]);
           cityLabelMarkersRef.current[idx].setIcon(createCityIcon(stage, best.x, best.y));
-        });
+        }
       }
     };
 
