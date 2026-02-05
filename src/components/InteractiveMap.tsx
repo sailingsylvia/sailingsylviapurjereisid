@@ -364,95 +364,218 @@ const InteractiveMap = () => {
       stageMarkersRef.current.forEach((m, i) => m.setLatLng(displayLatLngs[i]));
       routeLineRef.current?.setLatLngs(routeCoordinates as unknown as L.LatLngExpression[]);
 
-      // Place distance labels directly ON the route line midpoint (simple & clean)
+      // ---- Distance labels: keep them ON the route, but slide ALONG the line to avoid overlaps
       const distanceObstacles: LabelRect[] = [];
+      const padDistance = 10;
+
+      const expandedRect = (r: LabelRect, pad: number): LabelRect => ({
+        x: r.x - pad,
+        y: r.y - pad,
+        w: r.w + pad * 2,
+        h: r.h + pad * 2,
+      });
+
+      const intersectionArea = (a: LabelRect, b: LabelRect) => {
+        const x1 = Math.max(a.x, b.x);
+        const y1 = Math.max(a.y, b.y);
+        const x2 = Math.min(a.x + a.w, b.x + b.w);
+        const y2 = Math.min(a.y + a.h, b.y + b.h);
+        const w = x2 - x1;
+        const h = y2 - y1;
+        return w > 0 && h > 0 ? w * h : 0;
+      };
+
+      const overlapAreaWithObstacles = (rect: LabelRect, obstacles: LabelRect[], pad: number) => {
+        if (obstacles.length === 0) return 0;
+        const a = expandedRect(rect, pad);
+        let total = 0;
+        for (const o of obstacles) {
+          total += intersectionArea(a, expandedRect(o, pad));
+        }
+        return total;
+      };
+
+      const pointAtArcLen = (pts: L.Point[], targetLen: number) => {
+        if (pts.length === 1) return { pt: pts[0], angleDeg: 0 };
+
+        let accum = 0;
+        for (let k = 1; k < pts.length; k++) {
+          const a = pts[k - 1];
+          const b = pts[k];
+          const segLen = distPx(a, b);
+          if (accum + segLen >= targetLen) {
+            const t = segLen === 0 ? 0 : (targetLen - accum) / segLen;
+            const pt = L.point(lerp(a.x, b.x, t), lerp(a.y, b.y, t));
+            const angleDeg = (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
+            return { pt, angleDeg };
+          }
+          accum += segLen;
+        }
+
+        const last = pts[pts.length - 1];
+        const prev = pts[pts.length - 2];
+        const angleDeg = (Math.atan2(last.y - prev.y, last.x - prev.x) * 180) / Math.PI;
+        return { pt: last, angleDeg };
+      };
+
       for (const { marker, toIndex } of distanceLabelMarkersRef.current) {
         const stage = mainStages[toIndex];
         const distance = stage.distanceFromPrevious || 0;
         const prevStage = mainStages[toIndex - 1];
 
         // Get the full route segment including waypoints
-        const fromId = prevStage.id;
-        const toId = stage.id;
-        const key = `${fromId}->${toId}`;
+        const key = `${prevStage.id}->${stage.id}`;
         const via = routeLegWaypoints[key] ?? [];
 
-        // Build segment coordinates
         const segmentCoords: L.LatLngExpression[] = [
           [prevStage.coordinates.lat, prevStage.coordinates.lng],
           ...via,
           [stage.coordinates.lat, stage.coordinates.lng],
         ];
 
-        // Find the midpoint along the polyline (by arc length)
-        let totalLen = 0;
         const screenPts = segmentCoords.map((c) => {
           const ll = Array.isArray(c) ? L.latLng(c[0], c[1]) : L.latLng(c);
           return map.latLngToContainerPoint(ll);
         });
-        for (let k = 1; k < screenPts.length; k++) {
-          totalLen += Math.hypot(screenPts[k].x - screenPts[k - 1].x, screenPts[k].y - screenPts[k - 1].y);
-        }
-        const halfLen = totalLen / 2;
 
-        let accum = 0;
-        let midPt = screenPts[0];
-        let angleDeg = 0;
-        for (let k = 1; k < screenPts.length; k++) {
-          const dx = screenPts[k].x - screenPts[k - 1].x;
-          const dy = screenPts[k].y - screenPts[k - 1].y;
-          const segLen = Math.hypot(dx, dy);
-          if (accum + segLen >= halfLen) {
-            const t = (halfLen - accum) / segLen;
-            midPt = L.point(
-              screenPts[k - 1].x + dx * t,
-              screenPts[k - 1].y + dy * t
-            );
-            angleDeg = Math.atan2(dy, dx) * (180 / Math.PI);
+        let totalLen = 0;
+        for (let k = 1; k < screenPts.length; k++) totalLen += distPx(screenPts[k], screenPts[k - 1]);
+        if (totalLen < 1) continue;
+
+        const halfLen = totalLen / 2;
+        const step = Math.max(26, Math.min(120, totalLen * 0.12));
+        const minLen = Math.min(halfLen, step * 0.6);
+        const maxLen = Math.max(halfLen, totalLen - step * 0.6);
+
+        const multipliers = [0, -1, 1, -2, 2, -3, 3, -4, 4];
+        const candidates = Array.from(
+          new Set(
+            multipliers
+              .map((m) => Math.min(Math.max(halfLen + m * step, minLen), maxLen))
+              .map((v) => Math.round(v))
+          )
+        );
+
+        let best:
+          | {
+              pt: L.Point;
+              angleDeg: number;
+              rect: LabelRect;
+              overlapArea: number;
+              score: number;
+            }
+          | null = null;
+
+        for (const target of candidates) {
+          const { pt, angleDeg } = pointAtArcLen(screenPts, target);
+          const aabb = estimateDistanceLabelAabb(distance, angleDeg);
+          const rect: LabelRect = { x: pt.x - aabb.w / 2, y: pt.y - aabb.h / 2, w: aabb.w, h: aabb.h };
+
+          const overlapArea = overlapAreaWithObstacles(rect, distanceObstacles, padDistance);
+          const score = overlapArea * 1000 + Math.abs(target - halfLen);
+
+          if (overlapArea === 0) {
+            best = { pt, angleDeg, rect, overlapArea, score };
             break;
           }
-          accum += segLen;
+
+          if (!best || score < best.score) best = { pt, angleDeg, rect, overlapArea, score };
         }
 
-        const isFlipped = angleDeg > 90 || angleDeg < -90;
-        const midLatLng = map.containerPointToLatLng(midPt);
-        marker.setLatLng(midLatLng);
-        marker.setIcon(createDistanceIcon(distance, angleDeg, isFlipped));
+        if (!best) continue;
 
-        // Add to obstacles for city label collision
-        const aabb = estimateDistanceLabelAabb(distance, angleDeg);
-        distanceObstacles.push({
-          x: midPt.x - aabb.w / 2,
-          y: midPt.y - aabb.h / 2,
-          w: aabb.w,
-          h: aabb.h,
-        });
+        const isFlipped = best.angleDeg > 90 || best.angleDeg < -90;
+        marker.setLatLng(map.containerPointToLatLng(best.pt));
+        marker.setIcon(createDistanceIcon(distance, best.angleDeg, isFlipped));
+        distanceObstacles.push(best.rect);
       }
 
-      // Place city labels directly next to pins (simple fixed offsets)
+      // ---- City labels: keep them near pins, choose the nearest non-overlapping slot
+      const cityObstacles: LabelRect[] = [...distanceObstacles];
+      const padCity = 12;
+
+      const createCityOffsetCandidates = (p: L.Point, size: { w: number; h: number }, mapSize: L.Point) => {
+        const baseY = pinHeadOffsetY - size.h / 2;
+        const belowY = pinHeadOffsetY + 20;
+        const aboveY = pinHeadOffsetY - size.h - 10;
+
+        const rightX = 12;
+        const leftX = -size.w - 12;
+
+        const xOrder = p.x + size.w + 20 > mapSize.x ? [leftX, rightX] : [rightX, leftX];
+        const yOrder = p.y + baseY < 10 ? [belowY, baseY, aboveY] : [baseY, belowY, aboveY];
+
+        const nudges = [
+          { dx: 0, dy: 0 },
+          { dx: 0, dy: -10 },
+          { dx: 0, dy: 10 },
+          { dx: 10, dy: 0 },
+          { dx: -10, dy: 0 },
+        ];
+
+        const out: Array<{ x: number; y: number; preferredDist: number }> = [];
+        const preferred = { x: xOrder[0], y: yOrder[0] };
+
+        for (const x of xOrder) {
+          for (const y of yOrder) {
+            for (const n of nudges) {
+              const raw = { x: x + n.dx, y: y + n.dy };
+              const clamped = clampOffsetToMap(p, size, raw, mapSize, 6);
+              const preferredDist = Math.hypot(clamped.x - preferred.x, clamped.y - preferred.y);
+              out.push({ x: clamped.x, y: clamped.y, preferredDist });
+            }
+          }
+        }
+
+        // Remove duplicates (after clamping)
+        const unique = new Map<string, { x: number; y: number; preferredDist: number }>();
+        for (const c of out) unique.set(`${Math.round(c.x)}:${Math.round(c.y)}`, c);
+        return Array.from(unique.values()).sort((a, b) => a.preferredDist - b.preferredDist);
+      };
+
+      const overlapAreaAny = (rect: LabelRect, obstacles: LabelRect[], pad: number) => {
+        const a = expandedRect(rect, pad);
+        let total = 0;
+        for (const o of obstacles) total += intersectionArea(a, expandedRect(o, pad));
+        return total;
+      };
+
       for (let idx = 0; idx < mainStages.length; idx++) {
         const stage = mainStages[idx];
         const p = displayPoints[idx];
         const size = estimateCityLabelSize(stage);
 
-        // Simple offset: place label to the right and slightly above the pin
-        let offsetX = 12;
-        let offsetY = pinHeadOffsetY - size.h / 2;
+        const candidates = createCityOffsetCandidates(p, size, mapSize);
 
-        // If pin is on the right edge, place label to the left
-        if (p.x + size.w + 20 > mapSize.x) {
-          offsetX = -size.w - 12;
+        let best:
+          | {
+              offset: { x: number; y: number };
+              rect: LabelRect;
+              overlapArea: number;
+              score: number;
+            }
+          | null = null;
+
+        for (const c of candidates) {
+          const rect: LabelRect = { x: p.x + c.x, y: p.y + c.y, w: size.w, h: size.h };
+          const overlapArea = overlapAreaAny(rect, cityObstacles, padCity);
+          const score = overlapArea * 1000 + c.preferredDist;
+
+          if (overlapArea === 0) {
+            best = { offset: { x: c.x, y: c.y }, rect, overlapArea, score };
+            break;
+          }
+          if (!best || score < best.score) best = { offset: { x: c.x, y: c.y }, rect, overlapArea, score };
         }
-        // If pin is near top edge, place label below
-        if (p.y + offsetY < 10) {
-          offsetY = pinHeadOffsetY + 20;
-        }
+
+        const offset = best?.offset ?? { x: 12, y: pinHeadOffsetY - size.h / 2 };
+        const rect = best?.rect ?? { x: p.x + offset.x, y: p.y + offset.y, w: size.w, h: size.h };
 
         cityLabelMarkersRef.current[idx].setLatLng(displayLatLngs[idx]);
-        cityLabelMarkersRef.current[idx].setIcon(
-          createCityIcon(stage, offsetX, offsetY, size, undefined)
-        );
+        cityLabelMarkersRef.current[idx].setIcon(createCityIcon(stage, offset.x, offset.y, size, undefined));
+        cityObstacles.push(rect);
       }
+
     };
 
     map.on("zoomend", rerenderAll);
