@@ -275,19 +275,23 @@ const InteractiveMap = () => {
 
     const estimateDistanceLabelAabb = (distanceNm: number, rawAngleDeg: number) => {
       const text = `${distanceNm} miili`;
+
       // Mirror the readability rotation used inside createDistanceIcon
       let labelRotation = rawAngleDeg;
       if (labelRotation > 90) labelRotation -= 180;
       if (labelRotation < -90) labelRotation += 180;
 
-      // Heavier over-estimation: prevents labels that "look" overlapping even if algorithm thinks they don't.
-      const baseW = Math.ceil(measureTextPx(text) + 78);
-      const baseH = 24;
+      // More realistic pill size estimate (still slightly conservative).
+      // Components: arrow (12px) + gap (3px) + paddings (≈16px) + safety.
+      const baseW = Math.ceil(measureTextPx(text) + 52);
+      const baseH = 18;
 
       const theta = (Math.abs(labelRotation) * Math.PI) / 180;
       const w = Math.abs(baseW * Math.cos(theta)) + Math.abs(baseH * Math.sin(theta));
       const h = Math.abs(baseW * Math.sin(theta)) + Math.abs(baseH * Math.cos(theta));
-      return { w: Math.ceil(w) + 16, h: Math.ceil(h) + 16 };
+
+      // Small safety margin for shadow/rounding
+      return { w: Math.ceil(w) + 10, h: Math.ceil(h) + 10 };
     };
 
     const clampOffsetToMap = (
@@ -423,12 +427,67 @@ const InteractiveMap = () => {
         return { pt: last, angleDeg };
       };
 
+      // Build candidate placements for every leg first, then solve a global non-overlap layout.
+      type DistanceCandidate = {
+        pt: L.Point;
+        angleDeg: number;
+        isFlipped: boolean;
+        rect: LabelRect;
+      };
+      type DistanceLeg = {
+        marker: L.Marker;
+        toIndex: number;
+        distance: number;
+        candidates: DistanceCandidate[];
+      };
+
+      const buildArcLenCandidates = (totalLen: number) => {
+        const mid = totalLen / 2;
+        // Start with a few “nice” fractions, then add symmetric steps around midpoint.
+        const fractions = [0.5, 0.4, 0.6, 0.32, 0.68, 0.25, 0.75, 0.18, 0.82, 0.12, 0.88, 0.08, 0.92];
+        const step = Math.max(8, Math.min(56, totalLen * 0.06));
+
+        const base = fractions.map((f) => Math.round(f * totalLen));
+        for (let k = 1; k <= 7; k++) {
+          base.push(Math.round(mid + k * step));
+          base.push(Math.round(mid - k * step));
+        }
+
+        // Keep labels off the pins when possible; on very short legs relax the margin.
+        let margin = Math.min(44, totalLen * 0.18);
+        if (totalLen - margin * 2 < 40) margin = Math.min(18, totalLen * 0.08);
+
+        const minLen = Math.max(0, margin);
+        const maxLen = Math.max(minLen, totalLen - margin);
+
+        const clamp = (v: number) => Math.max(minLen, Math.min(maxLen, v));
+        const uniq = new Map<number, number>();
+        for (const v of base) uniq.set(Math.round(clamp(v)), 1);
+
+        return Array.from(uniq.keys()).sort((a, b) => Math.abs(a - mid) - Math.abs(b - mid));
+      };
+
+      const buildCandidatesForLeg = (screenPts: L.Point[], totalLen: number, distance: number) => {
+        const targets = buildArcLenCandidates(totalLen);
+        const out = new Map<string, DistanceCandidate>();
+
+        for (const target of targets) {
+          const { pt, angleDeg } = pointAtArcLen(screenPts, target);
+          const aabb = estimateDistanceLabelAabb(distance, angleDeg);
+          const rect: LabelRect = { x: pt.x - aabb.w / 2, y: pt.y - aabb.h / 2, w: aabb.w, h: aabb.h };
+          const isFlipped = angleDeg > 90 || angleDeg < -90;
+          out.set(`${Math.round(pt.x)}:${Math.round(pt.y)}`, { pt, angleDeg, isFlipped, rect });
+        }
+
+        return Array.from(out.values());
+      };
+
+      const distanceLegs: DistanceLeg[] = [];
       for (const { marker, toIndex } of distanceLabelMarkersRef.current) {
         const stage = mainStages[toIndex];
         const distance = stage.distanceFromPrevious || 0;
         const prevStage = mainStages[toIndex - 1];
 
-        // Get the full route segment including waypoints
         const key = `${prevStage.id}->${stage.id}`;
         const via = routeLegWaypoints[key] ?? [];
 
@@ -447,58 +506,76 @@ const InteractiveMap = () => {
         for (let k = 1; k < screenPts.length; k++) totalLen += distPx(screenPts[k], screenPts[k - 1]);
         if (totalLen < 1) continue;
 
-        const halfLen = totalLen / 2;
-        // Use a smaller step on short segments so labels can actually slide (important in dense areas)
-        const step = Math.max(10, Math.min(80, totalLen * 0.08));
-        const margin = Math.min(18, totalLen * 0.12);
-        const minLen = Math.max(0, margin);
-        const maxLen = Math.max(minLen, totalLen - margin);
-
-        // Sample candidate positions across the whole leg, but prefer ones closest to the midpoint.
-        const sampleCount = Math.min(25, Math.max(9, Math.round((maxLen - minLen) / step) + 1));
-        const rawSamples = Array.from({ length: sampleCount }, (_, idx) => {
-          if (sampleCount === 1) return halfLen;
-          const t = idx / (sampleCount - 1);
-          return minLen + (maxLen - minLen) * t;
-        });
-
-        const candidates = Array.from(new Set(rawSamples.map((v) => Math.round(v)))).sort(
-          (a, b) => Math.abs(a - halfLen) - Math.abs(b - halfLen)
-        );
-
-        let best:
-          | {
-              pt: L.Point;
-              angleDeg: number;
-              rect: LabelRect;
-              overlapArea: number;
-              score: number;
-            }
-          | null = null;
-
-        for (const target of candidates) {
-          const { pt, angleDeg } = pointAtArcLen(screenPts, target);
-          const aabb = estimateDistanceLabelAabb(distance, angleDeg);
-          const rect: LabelRect = { x: pt.x - aabb.w / 2, y: pt.y - aabb.h / 2, w: aabb.w, h: aabb.h };
-
-          const overlapArea = overlapAreaWithObstacles(rect, distanceObstacles, padDistance);
-          const score = overlapArea * 1000 + Math.abs(target - halfLen);
-
-          if (overlapArea === 0) {
-            best = { pt, angleDeg, rect, overlapArea, score };
-            break;
-          }
-
-          if (!best || score < best.score) best = { pt, angleDeg, rect, overlapArea, score };
-        }
-
-        if (!best) continue;
-
-        const isFlipped = best.angleDeg > 90 || best.angleDeg < -90;
-        marker.setLatLng(map.containerPointToLatLng(best.pt));
-        marker.setIcon(createDistanceIcon(distance, best.angleDeg, isFlipped));
-        distanceObstacles.push(best.rect);
+        const candidates = buildCandidatesForLeg(screenPts, totalLen, distance);
+        distanceLegs.push({ marker, toIndex, distance, candidates });
       }
+
+      const solveDistanceLayout = (pad: number) => {
+        const order = distanceLegs
+          .map((leg, idx) => ({ idx, leg }))
+          .sort((a, b) => a.leg.candidates.length - b.leg.candidates.length);
+
+        const placed = new Map<number, DistanceCandidate>();
+        const obstacles: LabelRect[] = [];
+        const deadline = performance.now() + 30; // keep move/zoom responsive
+
+        const overlapsAny = (rect: LabelRect) => obstacles.some((o) => rectsOverlap(rect, o, pad));
+
+        const dfs = (i: number): boolean => {
+          if (performance.now() > deadline) return false;
+          if (i >= order.length) return true;
+
+          const { idx, leg } = order[i];
+          for (const cand of leg.candidates) {
+            if (overlapsAny(cand.rect)) continue;
+            placed.set(idx, cand);
+            obstacles.push(cand.rect);
+            if (dfs(i + 1)) return true;
+            obstacles.pop();
+            placed.delete(idx);
+          }
+          return false;
+        };
+
+        const ok = dfs(0);
+        return ok ? placed : null;
+      };
+
+      const placed = solveDistanceLayout(padDistance) ?? solveDistanceLayout(8);
+
+      // Apply layout; if we can't find a full non-overlap solution, fall back to a partial non-overlap layout
+      // (hiding labels that can't be placed without collision at the current zoom).
+      distanceObstacles.length = 0;
+      const appliedObstacles: LabelRect[] = [];
+
+      if (placed) {
+        distanceLegs.forEach((leg, idx) => {
+          const cand = placed.get(idx);
+          if (!cand) return;
+          leg.marker.setOpacity(1);
+          leg.marker.setLatLng(map.containerPointToLatLng(cand.pt));
+          leg.marker.setIcon(createDistanceIcon(leg.distance, cand.angleDeg, cand.isFlipped));
+          appliedObstacles.push(cand.rect);
+        });
+      } else {
+        // Greedy partial placement with strict non-overlap.
+        const order = distanceLegs
+          .map((leg, idx) => ({ idx, leg }))
+          .sort((a, b) => a.leg.candidates.length - b.leg.candidates.length);
+
+        for (const leg of distanceLegs) leg.marker.setOpacity(0);
+
+        for (const { idx, leg } of order) {
+          const cand = leg.candidates.find((c) => !appliedObstacles.some((o) => rectsOverlap(c.rect, o, 8)));
+          if (!cand) continue;
+          leg.marker.setOpacity(1);
+          leg.marker.setLatLng(map.containerPointToLatLng(cand.pt));
+          leg.marker.setIcon(createDistanceIcon(leg.distance, cand.angleDeg, cand.isFlipped));
+          appliedObstacles.push(cand.rect);
+        }
+      }
+
+      distanceObstacles.push(...appliedObstacles);
 
       // ---- City labels: keep them near pins, choose the nearest non-overlapping slot
       const cityObstacles: LabelRect[] = [...distanceObstacles];
