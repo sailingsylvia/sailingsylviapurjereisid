@@ -307,7 +307,7 @@ const InteractiveMap = () => {
       return { x, y };
     };
 
-    // Create distance label icon with arrow parallel to route, arrow points in travel direction
+    // Create distance label icon with arrow parallel to route, positioned ON the line
     const createDistanceIcon = (distanceNm: number, angleDeg: number, isFlipped: boolean) => {
       const text = `${distanceNm} miili`;
       
@@ -317,7 +317,6 @@ const InteractiveMap = () => {
       if (labelRotation < -90) labelRotation += 180;
       
       // Arrow should point in original travel direction
-      // If label is flipped for readability, flip arrow too
       const arrowFlip = isFlipped ? "scaleX(-1)" : "";
       
       return L.divIcon({
@@ -335,8 +334,7 @@ const InteractiveMap = () => {
             color: ${labelText};
             white-space: nowrap;
             box-shadow: 0 2px 6px hsl(var(--foreground) / 0.25);
-            /* Center the pill exactly on the dotted line midpoint */
-            transform: translate(-50%, -50%) rotate(${labelRotation}deg);
+            transform: rotate(${labelRotation}deg);
             transform-origin: center;
           ">
             <svg width="12" height="8" viewBox="0 0 12 8" fill="none" style="transform: ${arrowFlip}; flex-shrink: 0;">
@@ -346,8 +344,9 @@ const InteractiveMap = () => {
             <span>${text}</span>
           </div>
         `,
-        iconSize: [1, 1],
-        iconAnchor: [0, 0],
+        // Anchor at center so the label sits exactly on the line midpoint
+        iconSize: [80, 20],
+        iconAnchor: [40, 10],
       });
     };
 
@@ -365,316 +364,94 @@ const InteractiveMap = () => {
       stageMarkersRef.current.forEach((m, i) => m.setLatLng(displayLatLngs[i]));
       routeLineRef.current?.setLatLngs(routeCoordinates as unknown as L.LatLngExpression[]);
 
-       // Place distance labels first so city-label collision avoidance can treat them as obstacles.
+      // Place distance labels directly ON the route line midpoint (simple & clean)
       const distanceObstacles: LabelRect[] = [];
-      {
-        const alreadyPlaced: LabelRect[] = [];
-         // More candidates to avoid distance-label stacking in dense areas (Ibiza/Mallorca etc.)
-         const tCandidates = [
-           0.5, 0.44, 0.56, 0.38, 0.62, 0.32, 0.68, 0.26, 0.74, 0.2, 0.8, 0.14, 0.86, 0.1, 0.9,
-         ];
-         const tangentialOffsetsPx = [0, -18, 18, -32, 32, -48, 48, -68, 68, -92, 92, -124, 124];
-         const normalOffsets = [0, 12, -12, 22, -22, 34, -34, 48, -48, 64, -64, 86, -86, 112, -112, 140, -140];
+      for (const { marker, toIndex } of distanceLabelMarkersRef.current) {
+        const stage = mainStages[toIndex];
+        const distance = stage.distanceFromPrevious || 0;
+        const prevStage = mainStages[toIndex - 1];
 
-         const clampRectToMap = (center: L.Point, size: { w: number; h: number }, margin = 8) => {
-           let x = center.x;
-           let y = center.y;
-           const halfW = size.w / 2;
-           const halfH = size.h / 2;
-           if (x - halfW < margin) x = margin + halfW;
-           if (y - halfH < margin) y = margin + halfH;
-           if (x + halfW > mapSize.x - margin) x = mapSize.x - margin - halfW;
-           if (y + halfH > mapSize.y - margin) y = mapSize.y - margin - halfH;
-           return L.point(x, y);
-         };
+        // Get the full route segment including waypoints
+        const fromId = prevStage.id;
+        const toId = stage.id;
+        const key = `${fromId}->${toId}`;
+        const via = routeLegWaypoints[key] ?? [];
 
-         // Place dense clusters first (more robust in tight areas)
-         const distItems = distanceLabelMarkersRef.current.map((seg) => {
-           const i = seg.toIndex;
-           const distance = mainStages[i].distanceFromPrevious || 0;
-           const p1 = displayPoints[i - 1];
-           const p2 = displayPoints[i];
-           const dx = p2.x - p1.x;
-           const dy = p2.y - p1.y;
-           const rawAngleDeg = Math.atan2(dy, dx) * (180 / Math.PI);
-           const aabb = estimateDistanceLabelAabb(distance, rawAngleDeg);
-           const mid = L.point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
-           return { seg, i, distance, p1, p2, rawAngleDeg, aabb, mid };
-         });
+        // Build segment coordinates
+        const segmentCoords: L.LatLngExpression[] = [
+          [prevStage.coordinates.lat, prevStage.coordinates.lng],
+          ...via,
+          [stage.coordinates.lat, stage.coordinates.lng],
+        ];
 
-         const nearestSegDist = new Map<number, number>();
-         for (const a of distItems) {
-           let best = Number.POSITIVE_INFINITY;
-           for (const b of distItems) {
-             if (a.i === b.i) continue;
-             best = Math.min(best, Math.hypot(a.mid.x - b.mid.x, a.mid.y - b.mid.y));
-           }
-           nearestSegDist.set(a.i, best);
-         }
-
-         distItems.sort((a, b) => {
-           const da = nearestSegDist.get(a.i) ?? Number.POSITIVE_INFINITY;
-           const db = nearestSegDist.get(b.i) ?? Number.POSITIVE_INFINITY;
-           if (da !== db) return da - db;
-           return b.aabb.w * b.aabb.h - a.aabb.w * a.aabb.h;
-         });
-
-         for (const item of distItems) {
-           const { seg, distance, p1, p2, rawAngleDeg, aabb } = item;
-          const isFlipped = rawAngleDeg > 90 || rawAngleDeg < -90;
-
-           // Normal vector (screen space) for small "lift" off the line in tight clusters.
-           const segDx = p2.x - p1.x;
-           const segDy = p2.y - p1.y;
-           const segLen = Math.hypot(segDx, segDy) || 1;
-           const nx = -segDy / segLen;
-           const ny = segDx / segLen;
-
-           const pickBest = (minEndPadPx: number) => {
-             let best: { t: number; normal: number; rect: LabelRect; overlaps: number; score: number } | null = null;
-
-             for (const tBase of tCandidates) {
-               for (const tanPx of tangentialOffsetsPx) {
-                 const t = Math.max(0.02, Math.min(0.98, tBase + tanPx / segLen));
-
-                 for (const normal of normalOffsets) {
-                   const x0 = lerp(p1.x, p2.x, t);
-                   const y0 = lerp(p1.y, p2.y, t);
-                   const x = x0 + nx * normal;
-                   const y = y0 + ny * normal;
-
-                   const pt = L.point(x0, y0);
-                   if (minEndPadPx > 0) {
-                     if (distPx(pt, p1) < minEndPadPx || distPx(pt, p2) < minEndPadPx) continue;
-                   }
-
-                   const clampedCenter = clampRectToMap(L.point(x, y), { w: aabb.w, h: aabb.h });
-                   const rect: LabelRect = {
-                     x: clampedCenter.x - aabb.w / 2,
-                     y: clampedCenter.y - aabb.h / 2,
-                     w: aabb.w,
-                     h: aabb.h,
-                   };
-
-                   let overlaps = 0;
-                   for (const other of alreadyPlaced) {
-                     if (rectsOverlap(rect, other, 16)) overlaps += 1;
-                   }
-
-                   // Prefer: 0 overlaps, then stay near segment midpoint and near the line.
-                   const shift = Math.abs(t - 0.5);
-                   const score = overlaps * 1_000_000 + shift * 1500 + Math.abs(normal) * 18 + Math.abs(tanPx) * 2.2;
-
-                   if (!best || score < best.score) {
-                     best = { t, normal, rect, overlaps, score };
-                     if (overlaps === 0 && shift < 0.16 && Math.abs(normal) <= 12 && Math.abs(tanPx) <= 18) return best;
-                   }
-                 }
-               }
-             }
-
-            return best;
-          };
-
-           const best =
-             pickBest(46) ??
-             pickBest(28) ??
-             pickBest(0) ?? {
-               t: 0.5,
-               normal: 0,
-               rect: {
-                 x: (p1.x + p2.x) / 2 - aabb.w / 2,
-                 y: (p1.y + p2.y) / 2 - aabb.h / 2,
-                 w: aabb.w,
-                 h: aabb.h,
-               },
-               overlaps: 0,
-               score: 0,
-             };
-
-            // Hard fallback: brute-force search for ANY zero-overlap placement.
-            // This guarantees we don't leave distance labels stacked on top of each other.
-            if (best.overlaps > 0) {
-              let forced: { t: number; normal: number; rect: LabelRect } | null = null;
-              const tScan = [
-                0.5, 0.42, 0.58, 0.34, 0.66, 0.26, 0.74, 0.18, 0.82, 0.1, 0.9,
-              ];
-              const tanScan = [0, -32, 32, -68, 68, -124, 124, -180, 180];
-              const normalScan = [0, 22, -22, 48, -48, 86, -86, 140, -140, 200, -200, 260, -260];
-
-              outer: for (const tBase of tScan) {
-                for (const tanPx of tanScan) {
-                  const t = Math.max(0.02, Math.min(0.98, tBase + tanPx / segLen));
-                  for (const normal of normalScan) {
-                    const x0 = lerp(p1.x, p2.x, t);
-                    const y0 = lerp(p1.y, p2.y, t);
-                    const x = x0 + nx * normal;
-                    const y = y0 + ny * normal;
-                    const clampedCenter = clampRectToMap(L.point(x, y), { w: aabb.w, h: aabb.h });
-                    const rect: LabelRect = {
-                      x: clampedCenter.x - aabb.w / 2,
-                      y: clampedCenter.y - aabb.h / 2,
-                      w: aabb.w,
-                      h: aabb.h,
-                    };
-                    let overlaps = 0;
-                    for (const other of alreadyPlaced) if (rectsOverlap(rect, other, 20)) overlaps += 1;
-                    if (overlaps === 0) {
-                      forced = { t, normal, rect };
-                      break outer;
-                    }
-                  }
-                }
-              }
-              if (forced) {
-                (best as any).t = forced.t;
-                (best as any).normal = forced.normal;
-                (best as any).rect = forced.rect;
-              }
-            }
-
-           const x = lerp(p1.x, p2.x, best.t) + nx * best.normal;
-           const y = lerp(p1.y, p2.y, best.t) + ny * best.normal;
-            const posLatLng = map.containerPointToLatLng(
-              clampRectToMap(L.point(x, y), { w: aabb.w, h: aabb.h })
-            );
-          seg.marker.setLatLng(posLatLng);
-          seg.marker.setIcon(createDistanceIcon(distance, rawAngleDeg, isFlipped));
-
-          alreadyPlaced.push(best.rect);
-          distanceObstacles.push(best.rect);
+        // Find the midpoint along the polyline (by arc length)
+        let totalLen = 0;
+        const screenPts = segmentCoords.map((c) => {
+          const ll = Array.isArray(c) ? L.latLng(c[0], c[1]) : L.latLng(c);
+          return map.latLngToContainerPoint(ll);
+        });
+        for (let k = 1; k < screenPts.length; k++) {
+          totalLen += Math.hypot(screenPts[k].x - screenPts[k - 1].x, screenPts[k].y - screenPts[k - 1].y);
         }
+        const halfLen = totalLen / 2;
+
+        let accum = 0;
+        let midPt = screenPts[0];
+        let angleDeg = 0;
+        for (let k = 1; k < screenPts.length; k++) {
+          const dx = screenPts[k].x - screenPts[k - 1].x;
+          const dy = screenPts[k].y - screenPts[k - 1].y;
+          const segLen = Math.hypot(dx, dy);
+          if (accum + segLen >= halfLen) {
+            const t = (halfLen - accum) / segLen;
+            midPt = L.point(
+              screenPts[k - 1].x + dx * t,
+              screenPts[k - 1].y + dy * t
+            );
+            angleDeg = Math.atan2(dy, dx) * (180 / Math.PI);
+            break;
+          }
+          accum += segLen;
+        }
+
+        const isFlipped = angleDeg > 90 || angleDeg < -90;
+        const midLatLng = map.containerPointToLatLng(midPt);
+        marker.setLatLng(midLatLng);
+        marker.setIcon(createDistanceIcon(distance, angleDeg, isFlipped));
+
+        // Add to obstacles for city label collision
+        const aabb = estimateDistanceLabelAabb(distance, angleDeg);
+        distanceObstacles.push({
+          x: midPt.x - aabb.w / 2,
+          y: midPt.y - aabb.h / 2,
+          w: aabb.w,
+          h: aabb.h,
+        });
       }
 
-       // Place city labels next to pins; if forced further away, add a subtle leader line.
-      {
-        const placed: LabelRect[] = [...distanceObstacles];
+      // Place city labels directly next to pins (simple fixed offsets)
+      for (let idx = 0; idx < mainStages.length; idx++) {
+        const stage = mainStages[idx];
+        const p = displayPoints[idx];
+        const size = estimateCityLabelSize(stage);
 
-         type CityCandidate = { x: number; y: number; expand: number; slide: number; pref: number };
-         const candidateOffsetsFor = (size: { w: number; h: number }): CityCandidate[] => {
-           // Offsets are “top-left of label box” relative to the pin's container point.
-           // Strategy: try near-the-pin placements first; then expand outward along the same direction.
-            const gap = 12;
-           const base = [
-             // Preferred: above the pin (like the sample), then corners, then sides.
-              { pref: 0, x: 12, y: pinHeadOffsetY - size.h - gap, dir: { x: 1, y: -1 }, perp: { x: 1, y: 1 } }, // top-right
-              { pref: 1, x: -size.w - 12, y: pinHeadOffsetY - size.h - gap, dir: { x: -1, y: -1 }, perp: { x: 1, y: -1 } }, // top-left
-              { pref: 2, x: -size.w / 2, y: pinHeadOffsetY - size.h - 16, dir: { x: 0, y: -1 }, perp: { x: 1, y: 0 } }, // centered top
-              { pref: 3, x: 12, y: pinHeadOffsetY + gap, dir: { x: 1, y: 1 }, perp: { x: 1, y: -1 } }, // bottom-right
-              { pref: 4, x: -size.w - 12, y: pinHeadOffsetY + gap, dir: { x: -1, y: 1 }, perp: { x: 1, y: 1 } }, // bottom-left
-              { pref: 5, x: -size.w / 2, y: pinHeadOffsetY + 16, dir: { x: 0, y: 1 }, perp: { x: 1, y: 0 } }, // centered bottom
-              { pref: 6, x: 16, y: pinHeadOffsetY - size.h / 2, dir: { x: 1, y: 0 }, perp: { x: 0, y: 1 } }, // centered right
-              { pref: 7, x: -size.w - 16, y: pinHeadOffsetY - size.h / 2, dir: { x: -1, y: 0 }, perp: { x: 0, y: 1 } }, // centered left
-           ] as const;
+        // Simple offset: place label to the right and slightly above the pin
+        let offsetX = 12;
+        let offsetY = pinHeadOffsetY - size.h / 2;
 
-            // Keep labels close by default; only expand further when needed to avoid overlaps.
-            const expansions = [0, 10, 20, 30, 42, 54, 68, 84];
-           const slides = [0, -12, 12, -24, 24, -36, 36];
-           const out: CityCandidate[] = [];
-           const seen = new Set<string>();
-
-           for (const b of base) {
-             for (const expand of expansions) {
-               for (const slide of slides) {
-                 const x = b.x + b.dir.x * expand + b.perp.x * slide;
-                 const y = b.y + b.dir.y * expand + b.perp.y * slide;
-                 const key = `${Math.round(x)}:${Math.round(y)}`;
-                 if (seen.has(key)) continue;
-                 seen.add(key);
-                 out.push({ x, y, expand, slide, pref: b.pref });
-               }
-             }
-           }
-
-           return out;
-         };
-
-        // Place dense clusters first so they get the best nearby slots.
-        const cityIndices = mainStages.map((_, i) => i);
-        const neighborDistance = (i: number) => {
-          let best = Number.POSITIVE_INFINITY;
-          for (let j = 0; j < displayPoints.length; j++) {
-            if (j === i) continue;
-            best = Math.min(best, distPx(displayPoints[i], displayPoints[j]));
-          }
-          return best;
-        };
-        cityIndices.sort((a, b) => neighborDistance(a) - neighborDistance(b));
-
-        for (const idx of cityIndices) {
-          const stage = mainStages[idx];
-          const p = displayPoints[idx];
-          const size = estimateCityLabelSize(stage);
-           const candidates = candidateOffsetsFor(size).map((o) => ({
-             ...o,
-             ...clampOffsetToMap(p, size, o, mapSize),
-           }));
-
-           let best = candidates[0];
-          let bestOverlaps = Number.POSITIVE_INFINITY;
-          let bestScore = Number.POSITIVE_INFINITY;
-
-          for (const o of candidates) {
-            const rect: LabelRect = { x: p.x + o.x, y: p.y + o.y, w: size.w, h: size.h };
-            let overlaps = 0;
-            for (const other of placed) {
-              if (rectsOverlap(rect, other, 16)) overlaps += 1;
-            }
-
-            // Prefer: 0 overlaps first; then keep label center close to the pin.
-            const centerDist = Math.hypot(o.x + size.w / 2, o.y + size.h / 2);
-             const score =
-               (overlaps > 0 ? overlaps * 1_000_000 : 0) +
-                centerDist * 1.8 +
-               o.pref * 6 +
-               Math.abs(o.slide) * 0.15 +
-                o.expand * 0.8;
-
-            if (overlaps < bestOverlaps || (overlaps === bestOverlaps && score < bestScore)) {
-              bestOverlaps = overlaps;
-              bestScore = score;
-              best = o;
-                if (overlaps === 0 && centerDist < 54) break;
-            }
-          }
-
-          // Hard fallback: spiral search to guarantee 0 overlaps.
-          if (bestOverlaps > 0) {
-            const radii = [96, 120, 144, 168, 192, 220, 252, 288, 320];
-            const angles = Array.from({ length: 16 }, (_, k) => k * 22.5);
-            outer: for (const r of radii) {
-              for (const a of angles) {
-                const rad = (a * Math.PI) / 180;
-                const ox = Math.cos(rad) * r - size.w / 2;
-                const oy = Math.sin(rad) * r - size.h / 2;
-                const clamped = clampOffsetToMap(p, size, { x: ox, y: oy } as any, mapSize);
-                const rect: LabelRect = { x: p.x + clamped.x, y: p.y + clamped.y, w: size.w, h: size.h };
-                let overlaps = 0;
-                for (const other of placed) if (rectsOverlap(rect, other, 16)) overlaps += 1;
-                if (overlaps === 0) {
-                  best = { x: clamped.x, y: clamped.y, expand: r, slide: 0, pref: 99 };
-                  bestOverlaps = 0;
-                  break outer;
-                }
-              }
-            }
-          }
-
-          placed.push({ x: p.x + best.x, y: p.y + best.y, w: size.w, h: size.h });
-          cityLabelMarkersRef.current[idx].setLatLng(displayLatLngs[idx]);
-
-           const bestCenterDist = Math.hypot(best.x + size.w / 2, best.y + size.h / 2);
-           const showLeader = bestCenterDist > 58;
-           cityLabelMarkersRef.current[idx].setIcon(
-             createCityIcon(
-               stage,
-               best.x,
-               best.y,
-               size,
-               showLeader ? { x: best.x + size.w / 2, y: best.y + size.h / 2 } : undefined
-             )
-           );
+        // If pin is on the right edge, place label to the left
+        if (p.x + size.w + 20 > mapSize.x) {
+          offsetX = -size.w - 12;
         }
+        // If pin is near top edge, place label below
+        if (p.y + offsetY < 10) {
+          offsetY = pinHeadOffsetY + 20;
+        }
+
+        cityLabelMarkersRef.current[idx].setLatLng(displayLatLngs[idx]);
+        cityLabelMarkersRef.current[idx].setIcon(
+          createCityIcon(stage, offsetX, offsetY, size, undefined)
+        );
       }
     };
 
