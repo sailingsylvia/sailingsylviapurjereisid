@@ -308,45 +308,50 @@ const InteractiveMap = () => {
     };
 
     // Create distance label icon with arrow parallel to route, positioned ON the line
+    // NOTE: We anchor the Leaflet icon at the route point (0,0) and use CSS translate(-50%,-50%)
+    // so the pill is truly centered on the polyline. This keeps collision math consistent.
     const createDistanceIcon = (distanceNm: number, angleDeg: number, isFlipped: boolean) => {
       const text = `${distanceNm} miili`;
-      
+
       // Label rotation for readability
       let labelRotation = angleDeg;
       if (labelRotation > 90) labelRotation -= 180;
       if (labelRotation < -90) labelRotation += 180;
-      
+
       // Arrow should point in original travel direction
       const arrowFlip = isFlipped ? "scaleX(-1)" : "";
-      
+
       return L.divIcon({
         className: "distance-label",
         html: `
-          <div style="
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
-            background: ${markerColor};
-            padding: 3px 8px 3px 5px;
-            border-radius: 12px;
-            font-size: 9px;
-            font-weight: 600;
-            color: ${labelText};
-            white-space: nowrap;
-            box-shadow: 0 2px 6px hsl(var(--foreground) / 0.25);
-            transform: rotate(${labelRotation}deg);
-            transform-origin: center;
-          ">
-            <svg width="12" height="8" viewBox="0 0 12 8" fill="none" style="transform: ${arrowFlip}; flex-shrink: 0;">
-              <path d="M7 1L11 4L7 7" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M1 4H10" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-            <span>${text}</span>
+          <div style="position: relative; width: 1px; height: 1px;">
+            <div style="
+              display: inline-flex;
+              align-items: center;
+              gap: 3px;
+              background: ${markerColor};
+              padding: 3px 8px 3px 5px;
+              border-radius: 12px;
+              font-size: 9px;
+              font-weight: 600;
+              color: ${labelText};
+              white-space: nowrap;
+              box-shadow: 0 2px 6px hsl(var(--foreground) / 0.25);
+              transform: translate(-50%, -50%) rotate(${labelRotation}deg);
+              transform-origin: center;
+              pointer-events: none;
+            ">
+              <svg width="12" height="8" viewBox="0 0 12 8" fill="none" style="transform: ${arrowFlip}; flex-shrink: 0;">
+                <path d="M7 1L11 4L7 7" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M1 4H10" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              <span>${text}</span>
+            </div>
           </div>
         `,
-        // Anchor at center so the label sits exactly on the line midpoint
-        iconSize: [80, 20],
-        iconAnchor: [40, 10],
+        // Anchor at the route point; inner pill centers itself with translate(-50%,-50%).
+        iconSize: [1, 1],
+        iconAnchor: [0, 0],
       });
     };
 
@@ -366,7 +371,7 @@ const InteractiveMap = () => {
 
       // ---- Distance labels: keep them ON the route, but slide ALONG the line to avoid overlaps
       const distanceObstacles: LabelRect[] = [];
-      const padDistance = 10;
+      const padDistance = 16;
 
       const expandedRect = (r: LabelRect, pad: number): LabelRect => ({
         x: r.x - pad,
@@ -443,17 +448,22 @@ const InteractiveMap = () => {
         if (totalLen < 1) continue;
 
         const halfLen = totalLen / 2;
-        const step = Math.max(26, Math.min(120, totalLen * 0.12));
-        const minLen = Math.min(halfLen, step * 0.6);
-        const maxLen = Math.max(halfLen, totalLen - step * 0.6);
+        // Use a smaller step on short segments so labels can actually slide (important in dense areas)
+        const step = Math.max(10, Math.min(80, totalLen * 0.08));
+        const margin = Math.min(18, totalLen * 0.12);
+        const minLen = Math.max(0, margin);
+        const maxLen = Math.max(minLen, totalLen - margin);
 
-        const multipliers = [0, -1, 1, -2, 2, -3, 3, -4, 4];
-        const candidates = Array.from(
-          new Set(
-            multipliers
-              .map((m) => Math.min(Math.max(halfLen + m * step, minLen), maxLen))
-              .map((v) => Math.round(v))
-          )
+        // Sample candidate positions across the whole leg, but prefer ones closest to the midpoint.
+        const sampleCount = Math.min(25, Math.max(9, Math.round((maxLen - minLen) / step) + 1));
+        const rawSamples = Array.from({ length: sampleCount }, (_, idx) => {
+          if (sampleCount === 1) return halfLen;
+          const t = idx / (sampleCount - 1);
+          return minLen + (maxLen - minLen) * t;
+        });
+
+        const candidates = Array.from(new Set(rawSamples.map((v) => Math.round(v)))).sort(
+          (a, b) => Math.abs(a - halfLen) - Math.abs(b - halfLen)
         );
 
         let best:
