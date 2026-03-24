@@ -12,7 +12,6 @@ import vilamouraPort from "@/assets/vilamoura-port.jpg";
 import morairaBeach from "@/assets/moraira-beach-v3.jpg";
 import marinaDelNettuno from "@/assets/marina-del-nettuno.jpg";
 import orikumMarina from "@/assets/orikum-marina.jpg";
-import corfuAgiosGordios from "@/assets/corfu-agios-gordios.jpg";
 import jooniaMeri from "@/assets/joonia-meri.jpg";
 import akropolis from "@/assets/akropolis.jpg";
 import santoriniCyclades from "@/assets/santorini-cyclades.jpg";
