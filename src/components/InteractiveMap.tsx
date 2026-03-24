@@ -574,27 +574,48 @@ const InteractiveMap = () => {
       const cityObstacles: LabelRect[] = [...distanceObstacles];
       const padCity = 12;
 
-      const createCityOffsetCandidates = (p: L.Point, size: { w: number; h: number }, mapSize: L.Point) => {
+      // Per-city preferred offset hints to keep labels close to their pins.
+      // Values are { dx, dy } pixel offsets from the pin head. Positive dx = right, positive dy = down.
+      const cityOffsetHints: Record<string, { dx: number; dy: number }> = {
+        kiel: { dx: 14, dy: -30 },          // right-above
+        dusseldorf: { dx: -100, dy: -8 },    // left
+        vilamoura: { dx: -100, dy: 8 },      // left-below
+        moraira: { dx: 14, dy: -30 },        // right-above
+        orikum: { dx: -100, dy: -8 },        // left
+      };
+
+      const createCityOffsetCandidates = (p: L.Point, size: { w: number; h: number }, mapSize: L.Point, cityId?: string) => {
         const baseY = pinHeadOffsetY - size.h / 2;
         const belowY = pinHeadOffsetY + 20;
         const aboveY = pinHeadOffsetY - size.h - 10;
 
-        const rightX = 12;
-        const leftX = -size.w - 12;
+        const rightX = 14;
+        const leftX = -size.w - 14;
+
+        // If we have a manual hint for this city, use it as the first/preferred candidate
+        const hint = cityId ? cityOffsetHints[cityId] : undefined;
 
         const xOrder = p.x + size.w + 20 > mapSize.x ? [leftX, rightX] : [rightX, leftX];
         const yOrder = p.y + baseY < 10 ? [belowY, baseY, aboveY] : [baseY, belowY, aboveY];
 
         const nudges = [
           { dx: 0, dy: 0 },
-          { dx: 0, dy: -10 },
-          { dx: 0, dy: 10 },
-          { dx: 10, dy: 0 },
-          { dx: -10, dy: 0 },
+          { dx: 0, dy: -8 },
+          { dx: 0, dy: 8 },
+          { dx: 8, dy: 0 },
+          { dx: -8, dy: 0 },
+          { dx: 0, dy: -16 },
+          { dx: 0, dy: 16 },
         ];
 
         const out: Array<{ x: number; y: number; preferredDist: number }> = [];
-        const preferred = { x: xOrder[0], y: yOrder[0] };
+        const preferred = hint ? { x: hint.dx, y: hint.dy } : { x: xOrder[0], y: yOrder[0] };
+
+        // Add the hint offset first if available
+        if (hint) {
+          const clamped = clampOffsetToMap(p, size, { x: hint.dx, y: hint.dy }, mapSize, 6);
+          out.push({ x: clamped.x, y: clamped.y, preferredDist: 0 });
+        }
 
         for (const x of xOrder) {
           for (const y of yOrder) {
@@ -625,7 +646,7 @@ const InteractiveMap = () => {
         const p = displayPoints[idx];
         const size = estimateCityLabelSize(stage);
 
-        const candidates = createCityOffsetCandidates(p, size, mapSize);
+        const candidates = createCityOffsetCandidates(p, size, mapSize, stage.id);
 
         let best:
           | {
