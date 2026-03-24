@@ -76,10 +76,12 @@ const StageCard = ({ stage, index, image }: StageCardProps) => {
                 <MapPin size={14} />
                 {stage.country}
               </span>
-              <span className="flex items-center gap-1">
-                <Calendar size={14} />
-                {stage.duration}
-              </span>
+              {stage.startDate && (
+                <span className="flex items-center gap-1">
+                  <Calendar size={14} />
+                  {stage.startDate}
+                </span>
+              )}
             </div>
           </div>
         </motion.div>
