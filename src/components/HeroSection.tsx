@@ -62,7 +62,7 @@ const HeroSection = () => {
           transition={{ duration: 0.8, delay: 0.4 }}
         >
           Avasta Euroopa ilusamaid sadamaid ja rannikuid meie eksklusiivsel purjereisil. 
-          Roomassaarest Korfuni ja Kreeka saarestikku – üle {totalDistanceSection1.toLocaleString()} meremiili seiklust!
+          Roomassaarest Kreeka saarestikku – üle {totalDistanceSection1.toLocaleString()} meremiili seiklust!
         </motion.p>
 
         <motion.div
@@ -90,7 +90,7 @@ const HeroSection = () => {
           transition={{ duration: 0.8, delay: 0.8 }}
         >
         {[
-            { value: "16", label: "Etappi" },
+            { value: "10", label: "Etappi" },
             { value: `${(totalDistanceSection1 / 1000).toFixed(1)}k+`, label: "Meremiili" },
             { value: "2026", label: "Hooaeg" },
           ].map((stat, index) => (

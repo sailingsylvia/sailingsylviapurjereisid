@@ -12,7 +12,6 @@ import vilamouraPort from "@/assets/vilamoura-port.jpg";
 import morairaBeach from "@/assets/moraira-beach-v3.jpg";
 import marinaDelNettuno from "@/assets/marina-del-nettuno.jpg";
 import orikumMarina from "@/assets/orikum-marina.jpg";
-import corfuAgiosGordios from "@/assets/corfu-agios-gordios.jpg";
 import jooniaMeri from "@/assets/joonia-meri.jpg";
 import akropolis from "@/assets/akropolis.jpg";
 import santoriniCyclades from "@/assets/santorini-cyclades.jpg";
@@ -20,15 +19,13 @@ import hydraIsland from "@/assets/hydra-island.jpg";
 
 // Images for each destination
 const stageImages: Record<string, string> = {
-  "roomassaare": roomassaareHarbor,
-  "kiel": kielCanal,
-  "dusseldorf": dusseldorfRhine,
-  "brest": brestCastle,
-  "vilamoura": vilamouraPort,
-  "moraira": morairaBeach,
-  "nettuno": marinaDelNettuno,
-  "orikum": orikumMarina,
-  "korfu": corfuAgiosGordios,
+  "roomassaare-kiel": roomassaareHarbor,
+  "kiel-dusseldorf": kielCanal,
+  "dusseldorf-brest": dusseldorfRhine,
+  "brest-vilamoura": brestCastle,
+  "vilamoura-moraira": vilamouraPort,
+  "moraira-nettuno": morairaBeach,
+  "nettuno-orikum": marinaDelNettuno,
   "lefkada": jooniaMeri,
   "egeuse": santoriniCyclades,
   "ateena": hydraIsland,
@@ -97,7 +94,7 @@ const StagesSection = () => {
               </p>
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 {section.id === 1 
-                  ? "8 etappi läbi Euroopa kaunimate sadamate. Vali endale sobiv lõik!"
+                  ? "7 etappi läbi Euroopa kaunimate sadamate. Vali endale sobiv lõik!"
                   : "Kreeka saarestiku avastamine 10-päevaste etappidena."}
               </p>
             </motion.div>

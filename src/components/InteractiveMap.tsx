@@ -1,30 +1,20 @@
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Navigation } from "lucide-react";
-import { voyageSections, totalDistanceSection1 } from "@/data/voyageData";
-import { routeLegWaypoints } from "@/data/routeWaypoints";
+import { totalDistanceSection1 } from "@/data/voyageData";
+import { routeLegWaypoints, mapCities } from "@/data/routeWaypoints";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// Helper to convert "20. juuli 2026" → "20. jul" or "2. august 2026" → "2. aug"
-const formatShortDate = (dateStr: string | undefined): string => {
-  if (!dateStr) return "";
-  
-  const months: Record<string, string> = {
-    jaanuar: "jan", veebruar: "veebr", märts: "märts", aprill: "apr",
-    mai: "mai", juuni: "juuni", juuli: "jul", august: "aug",
-    september: "sept", oktoober: "okt", november: "nov", detsember: "dets"
-  };
-  
-  // Match pattern like "20. juuli 2026"
-  const match = dateStr.match(/^(\d+)\.\s*(\w+)/);
-  if (match) {
-    const day = match[1];
-    const monthFull = match[2].toLowerCase();
-    const monthShort = months[monthFull] || monthFull.slice(0, 3);
-    return `${day}. ${monthShort}`;
-  }
-  return dateStr;
+// Distances between consecutive map cities (nM)
+const legDistances: Record<string, number> = {
+  "roomassaare->kiel": 660,
+  "kiel->dusseldorf": 360,
+  "dusseldorf->brest": 600,
+  "brest->vilamoura": 680,
+  "vilamoura->moraira": 560,
+  "moraira->nettuno": 750,
+  "nettuno->orikum": 350,
 };
 
 const InteractiveMap = () => {
@@ -33,8 +23,8 @@ const InteractiveMap = () => {
   const routeLineRef = useRef<L.Polyline | null>(null);
   const stageMarkersRef = useRef<L.Marker[]>([]);
   const cityLabelMarkersRef = useRef<L.Marker[]>([]);
-  const distanceLabelMarkersRef = useRef<Array<{ marker: L.Marker; toIndex: number }>>([]);
-  const mainStages = voyageSections[0].stages;
+  const distanceLabelMarkersRef = useRef<Array<{ marker: L.Marker; toIndex: number; distance: number }>>([]);
+  const cities = mapCities;
 
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
@@ -103,13 +93,13 @@ const InteractiveMap = () => {
 
     // Route coordinates (with optional water-waypoint legs so the dashed line doesn't cut across land)
     const routeCoordinates: [number, number][] = [];
-    for (let i = 0; i < mainStages.length; i++) {
-      const stage = mainStages[i];
+    for (let i = 0; i < cities.length; i++) {
+      const stage = cities[i];
       if (i === 0) {
         routeCoordinates.push([stage.coordinates.lat, stage.coordinates.lng]);
         continue;
       }
-      const from = mainStages[i - 1];
+      const from = cities[i - 1];
       const to = stage;
       const key = `${from.id}->${to.id}`;
       const via = routeLegWaypoints[key] ?? [];
@@ -129,7 +119,7 @@ const InteractiveMap = () => {
 
     // Add stage markers (pins)
     stageMarkersRef.current = [];
-    mainStages.forEach((stage, index) => {
+    cities.forEach((stage, index) => {
       const isStart = index === 0;
       const marker = L.marker([stage.coordinates.lat, stage.coordinates.lng], {
         icon: createPinIcon(isStart),
@@ -140,7 +130,7 @@ const InteractiveMap = () => {
 
     // City labels
     cityLabelMarkersRef.current = [];
-    mainStages.forEach((stage) => {
+    cities.forEach((stage) => {
       const marker = L.marker([stage.coordinates.lat, stage.coordinates.lng], {
         icon: L.divIcon({ className: "city-label", html: "", iconSize: [1, 1], iconAnchor: [0, 0] }),
         interactive: false,
@@ -151,16 +141,19 @@ const InteractiveMap = () => {
 
     // Distance labels
     distanceLabelMarkersRef.current = [];
-    for (let i = 1; i < mainStages.length; i++) {
-      const stage = mainStages[i];
-      if (!stage.distanceFromPrevious) continue;
+    for (let i = 1; i < cities.length; i++) {
+      const from = cities[i - 1];
+      const to = cities[i];
+      const key = `${from.id}->${to.id}`;
+      const distance = legDistances[key];
+      if (!distance) continue;
 
-      const marker = L.marker([stage.coordinates.lat, stage.coordinates.lng], {
+      const marker = L.marker([to.coordinates.lat, to.coordinates.lng], {
         icon: L.divIcon({ className: "distance-label", html: "", iconSize: [1, 1], iconAnchor: [0, 0] }),
         interactive: false,
         pane: "distanceLabels",
       }).addTo(map);
-      distanceLabelMarkersRef.current.push({ marker, toIndex: i });
+      distanceLabelMarkersRef.current.push({ marker, toIndex: i, distance });
     }
 
     // Fit bounds
@@ -171,14 +164,14 @@ const InteractiveMap = () => {
     // Create city label icon - compact with short date
     // Note: offsetX/offsetY are pixel offsets from the pin's map point (top-left of the label box)
     const createCityIcon = (
-      stage: (typeof mainStages)[number],
+      stage: (typeof cities)[number],
       offsetX: number,
       offsetY: number,
       size: { w: number; h: number },
       leaderLineTo?: { x: number; y: number }
     ) => {
-      const dateText = stage.id === "roomassaare" ? "20. jul" : formatShortDate(stage.arrivalDate);
-      const cityName = stage.city;
+      const dateText = stage.date;
+      const cityName = stage.name;
       const countryCode = stage.countryCode;
       
       return L.divIcon({
@@ -260,9 +253,9 @@ const InteractiveMap = () => {
       };
     })();
 
-    const estimateCityLabelSize = (stage: (typeof mainStages)[number]) => {
-      const dateText = stage.id === "roomassaare" ? "20. jul" : formatShortDate(stage.arrivalDate);
-      const line1 = `${stage.city} (${stage.countryCode})`;
+    const estimateCityLabelSize = (stage: (typeof cities)[number]) => {
+      const dateText = stage.date;
+      const line1 = `${stage.name} (${stage.countryCode})`;
       const line2 = dateText || "";
 
       // Extra-large safety margins to avoid any visual overlap even if fonts differ slightly.
@@ -360,10 +353,10 @@ const InteractiveMap = () => {
     };
 
     const rerenderAll = () => {
-      const displayPoints = mainStages.map((s) =>
+      const displayPoints = cities.map((s) =>
         map.latLngToContainerPoint([s.coordinates.lat, s.coordinates.lng])
       );
-      const displayLatLngs = mainStages.map(s => L.latLng(s.coordinates.lat, s.coordinates.lng));
+      const displayLatLngs = cities.map(s => L.latLng(s.coordinates.lat, s.coordinates.lng));
       const mapSize = map.getSize();
 
       const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -483,10 +476,9 @@ const InteractiveMap = () => {
       };
 
       const distanceLegs: DistanceLeg[] = [];
-      for (const { marker, toIndex } of distanceLabelMarkersRef.current) {
-        const stage = mainStages[toIndex];
-        const distance = stage.distanceFromPrevious || 0;
-        const prevStage = mainStages[toIndex - 1];
+      for (const { marker, toIndex, distance } of distanceLabelMarkersRef.current) {
+        const stage = cities[toIndex];
+        const prevStage = cities[toIndex - 1];
 
         const key = `${prevStage.id}->${stage.id}`;
         const via = routeLegWaypoints[key] ?? [];
@@ -627,8 +619,8 @@ const InteractiveMap = () => {
         return total;
       };
 
-      for (let idx = 0; idx < mainStages.length; idx++) {
-        const stage = mainStages[idx];
+      for (let idx = 0; idx < cities.length; idx++) {
+        const stage = cities[idx];
         const p = displayPoints[idx];
         const size = estimateCityLabelSize(stage);
 
@@ -683,7 +675,7 @@ const InteractiveMap = () => {
         mapInstanceRef.current = null;
       }
     };
-  }, [mainStages]);
+  }, [cities]);
 
   return (
     <section className="py-20 bg-secondary" id="marsruut">
@@ -702,7 +694,7 @@ const InteractiveMap = () => {
             Marsruut 2026
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Roomassaarest Korfuni läbi 11+ sihtkoha – kokku üle{" "}
+            Roomassaarest Orikumini läbi 8 sihtkoha – kokku üle{" "}
             {totalDistanceSection1.toLocaleString()} meremiili.
           </p>
         </motion.div>
