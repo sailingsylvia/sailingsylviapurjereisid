@@ -90,12 +90,15 @@ const StageCard = ({ stage, index, image }: StageCardProps) => {
       {/* Content */}
       <div className="w-full lg:w-1/2 px-4 lg:px-8">
         {/* Duration and booking info - only for non-start points */}
-        {showPrice && stage.startDate && (
+        {stage.startDate && (
           <div className="mb-6 p-4 bg-secondary rounded-xl border border-border">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-wrap">
               <Calendar className="text-ocean-medium" size={20} />
               <div>
                 <span className="font-display text-lg text-foreground">Start: {stage.startDate}</span>
+                {stage.duration && (
+                  <span className="text-sm text-muted-foreground ml-2">• {stage.duration}</span>
+                )}
                 {stage.distanceFromPrevious && (
                   <span className="text-sm text-muted-foreground ml-2">• {stage.distanceFromPrevious} nM</span>
                 )}
