@@ -268,7 +268,7 @@ const InteractiveMap = () => {
     };
 
     const estimateDistanceLabelAabb = (distanceNm: number, rawAngleDeg: number) => {
-      const text = `${distanceNm} miili`;
+      const text = `${distanceNm} NM`;
 
       // Mirror the readability rotation used inside createDistanceIcon
       let labelRotation = rawAngleDeg;
