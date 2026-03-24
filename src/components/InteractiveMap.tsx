@@ -142,15 +142,18 @@ const InteractiveMap = () => {
     // Distance labels
     distanceLabelMarkersRef.current = [];
     for (let i = 1; i < cities.length; i++) {
-      const stage = cities[i];
-      if (!stage.distanceFromPrevious) continue;
+      const from = cities[i - 1];
+      const to = cities[i];
+      const key = `${from.id}->${to.id}`;
+      const distance = legDistances[key];
+      if (!distance) continue;
 
-      const marker = L.marker([stage.coordinates.lat, stage.coordinates.lng], {
+      const marker = L.marker([to.coordinates.lat, to.coordinates.lng], {
         icon: L.divIcon({ className: "distance-label", html: "", iconSize: [1, 1], iconAnchor: [0, 0] }),
         interactive: false,
         pane: "distanceLabels",
       }).addTo(map);
-      distanceLabelMarkersRef.current.push({ marker, toIndex: i });
+      distanceLabelMarkersRef.current.push({ marker, toIndex: i, distance });
     }
 
     // Fit bounds
