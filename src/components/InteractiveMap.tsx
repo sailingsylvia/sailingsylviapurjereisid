@@ -479,7 +479,6 @@ const InteractiveMap = () => {
       for (const { marker, toIndex, distance } of distanceLabelMarkersRef.current) {
         const stage = cities[toIndex];
         const prevStage = cities[toIndex - 1];
-        const prevStage = cities[toIndex - 1];
 
         const key = `${prevStage.id}->${stage.id}`;
         const via = routeLegWaypoints[key] ?? [];
