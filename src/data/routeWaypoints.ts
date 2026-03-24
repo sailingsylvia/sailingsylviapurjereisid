@@ -51,9 +51,14 @@ export const routeLegWaypoints: Record<string, LatLngTuple[]> = {
     [38.35, -0.48], // Alicante
   ],
 
-  // Sardinia south coast → east coast Sicily → Strait of Messina
-  "sardiinia->nettuno": [
-    [39.214, 9.118], // Cagliari (Sardinia south)
+  // Moraira → Ibiza → Mallorca → Sardinia → Sicily (Marina del Nettuno)
+  "moraira->nettuno": [
+    [38.85, 0.50],  // off Moraira coast
+    [38.91, 1.42],  // Ibiza
+    [39.57, 2.65],  // Mallorca
+    [39.80, 4.30],  // Menorca passage
+    [40.12, 9.01],  // Sardinia (east coast)
+    [39.21, 9.12],  // Cagliari (south Sardinia)
     [38.60, 11.80], // open sea between Sardinia and Sicily
     [38.12, 13.36], // Palermo (north Sicily)
     [38.22, 15.24], // Milazzo (NE Sicily)
