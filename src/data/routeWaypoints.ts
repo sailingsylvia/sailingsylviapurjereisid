@@ -18,6 +18,7 @@ export const mapCities: MapCity[] = [
   { id: "moraira", name: "Moraira", countryCode: "ESP", coordinates: { lat: 38.6879, lng: 0.1375 }, date: "19. sept" },
   { id: "nettuno", name: "M. del Nettuno", countryCode: "ITA", coordinates: { lat: 38.19, lng: 15.56 }, date: "29. sept" },
   { id: "orikum", name: "Orikum", countryCode: "ALB", coordinates: { lat: 40.3269, lng: 19.4314 }, date: "7. okt" },
+  { id: "ateena", name: "Ateena", countryCode: "GRE", coordinates: { lat: 37.9364, lng: 23.6445 }, date: "15. okt" },
 ];
 
 // Hand-tuned waypoints to keep the drawn route visually on water
@@ -32,20 +33,25 @@ export const routeLegWaypoints: Record<string, LatLngTuple[]> = {
     [54.85, 11.25],
   ],
 
-  // Kiel Canal + North Sea + Rhine
+  // Kiel Canal + North Sea + Rhine mouth
   "kiel->dusseldorf": [
     [53.892, 9.142],
     [53.861, 8.714],
     [54.182, 7.886],
+    [53.50, 6.20],
     [51.949, 4.143],
+    [51.90, 5.50],
     [51.433, 6.769],
   ],
 
-  // Rhine → North Sea → English Channel
+  // Rhine mouth → North Sea → English Channel → Brest
   "dusseldorf->brest": [
+    [51.90, 5.50],
     [51.949, 4.143],
     [51.08, 2.55],
+    [50.30, 0.20],
     [49.645, -1.622],
+    [48.80, -3.50],
   ],
 
   // Bay of Biscay → Portuguese coast
@@ -69,23 +75,37 @@ export const routeLegWaypoints: Record<string, LatLngTuple[]> = {
     [38.35, -0.48],
   ],
 
-  // Moraira → Ibiza → Mallorca → Sardinia → Sicily
+  // Moraira → south of Ibiza → south of Mallorca → south of Sardinia → Sicily strait
   "moraira->nettuno": [
-    [38.85, 0.50],
-    [38.91, 1.42],
-    [39.57, 2.65],
-    [39.80, 4.30],
-    [40.12, 9.01],
-    [39.21, 9.12],
-    [38.60, 11.80],
-    [38.12, 13.36],
-    [38.22, 15.24],
+    [38.50, 0.60],
+    [38.30, 1.30],
+    [38.80, 2.60],
+    [39.10, 3.40],
+    [38.60, 5.50],
+    [38.20, 7.60],
+    [38.80, 9.50],
+    [38.40, 11.20],
+    [38.00, 13.00],
+    [38.10, 15.20],
   ],
 
-  // Strait of Messina → across Ionian Sea → Orikum
+  // Strait of Messina → Ionian Sea → Orikum
   "nettuno->orikum": [
     [38.30, 16.50],
+    [39.00, 17.80],
     [39.80, 18.37],
-    [40.15, 18.50],
+    [40.15, 18.80],
+  ],
+
+  // Orikum → around Peloponnese → Ateena (Piraeus)
+  "orikum->ateena": [
+    [39.60, 19.80],
+    [38.80, 20.30],
+    [38.20, 20.80],
+    [37.60, 21.00],
+    [37.00, 21.50],
+    [36.50, 22.50],
+    [36.80, 23.10],
+    [37.40, 23.50],
   ],
 };

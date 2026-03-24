@@ -15,6 +15,7 @@ const legDistances: Record<string, number> = {
   "vilamoura->moraira": 560,
   "moraira->nettuno": 750,
   "nettuno->orikum": 350,
+  "orikum->ateena": 350,
 };
 
 const InteractiveMap = () => {
