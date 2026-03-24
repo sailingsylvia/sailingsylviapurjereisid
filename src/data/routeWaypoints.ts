@@ -51,12 +51,17 @@ export const routeLegWaypoints: Record<string, LatLngTuple[]> = {
     [38.35, -0.48], // Alicante
   ],
 
-  // Around Italy (avoid cutting across the peninsula) – visual approximation
-  "sardiinia->orikum": [
+  // Sardinia south coast → east coast Sicily → Strait of Messina
+  "sardiinia->nettuno": [
     [39.214, 9.118], // Cagliari (Sardinia south)
+    [38.60, 11.80], // open sea between Sardinia and Sicily
     [38.12, 13.36], // Palermo (north Sicily)
     [38.22, 15.24], // Milazzo (NE Sicily)
-    [38.19, 15.56], // Strait of Messina
+  ],
+
+  // Strait of Messina → across Ionian Sea → Orikum
+  "nettuno->orikum": [
+    [38.30, 16.50], // off Calabria coast
     [39.80, 18.37], // Santa Maria di Leuca (heel of Italy)
     [40.15, 18.50], // Otranto
   ],
