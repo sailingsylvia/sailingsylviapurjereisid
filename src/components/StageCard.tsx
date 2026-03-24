@@ -123,9 +123,11 @@ const StageCard = ({ stage, index, image }: StageCardProps) => {
           {stage.description}
         </p>
 
-        <p className="text-sm text-muted-foreground/80 italic mb-6">
-          Igal õhtul jõuame erinevasse sadamasse, kus saab tutvuda kohalike vaatamisväärsustega ja võimalusel kohtuda kohapeal elavate eestlastega.
-        </p>
+        {stage.distanceFromPrevious && (
+          <p className="text-sm text-muted-foreground/80 italic mb-6">
+            Igal õhtul jõuame erinevasse sadamasse, kus saab tutvuda kohalike vaatamisväärsustega ja võimalusel kohtuda kohapeal elavate eestlastega.
+          </p>
+        )}
 
         {/* Sailing Training Section */}
         {stage.hasSailingTraining && (

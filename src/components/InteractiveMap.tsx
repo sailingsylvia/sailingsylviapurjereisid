@@ -694,8 +694,7 @@ const InteractiveMap = () => {
             Marsruut 2026
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Roomassaarest Orikumini läbi 8 sihtkoha – kokku üle{" "}
-            {totalDistanceSection1.toLocaleString()} meremiili.
+            Roomassaarest Orikumini läbi kümnete sadamate – kokku üle 4,000 meremiili.
           </p>
         </motion.div>
 
