@@ -223,8 +223,8 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Erinevate saarte külastused", "Snorgeldamine", "Kreeka tavern'id", "Ajaloo avastamine"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "8. oktoober 2026",
-        startDate: "8. okt",
+        arrivalDate: "10. oktoober 2026",
+        startDate: "10. okt",
         image: "joonia-meri"
       },
       {
