@@ -97,7 +97,7 @@ const StagesSection = () => {
               </p>
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 {section.id === 1 
-                  ? "10 etappi läbi Euroopa kaunimate sadamate. Vali endale sobiv lõik!"
+                  ? "8 etappi läbi Euroopa kaunimate sadamate. Vali endale sobiv lõik!"
                   : "Kreeka saarestiku avastamine 10-päevaste etappidena."}
               </p>
             </motion.div>
