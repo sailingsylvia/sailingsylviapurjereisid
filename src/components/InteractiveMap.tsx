@@ -309,7 +309,7 @@ const InteractiveMap = () => {
     // NOTE: We anchor the Leaflet icon at the route point (0,0) and use CSS translate(-50%,-50%)
     // so the pill is truly centered on the polyline. This keeps collision math consistent.
     const createDistanceIcon = (distanceNm: number, angleDeg: number, isFlipped: boolean) => {
-      const text = `${distanceNm} miili`;
+      const text = `${distanceNm} NM`;
 
       // Label rotation for readability
       let labelRotation = angleDeg;
