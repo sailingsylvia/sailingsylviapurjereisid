@@ -15,6 +15,7 @@ const legDistances: Record<string, number> = {
   "vilamoura->moraira": 560,
   "moraira->nettuno": 750,
   "nettuno->orikum": 350,
+  "orikum->ateena": 350,
 };
 
 const InteractiveMap = () => {
@@ -267,7 +268,7 @@ const InteractiveMap = () => {
     };
 
     const estimateDistanceLabelAabb = (distanceNm: number, rawAngleDeg: number) => {
-      const text = `${distanceNm} miili`;
+      const text = `${distanceNm} NM`;
 
       // Mirror the readability rotation used inside createDistanceIcon
       let labelRotation = rawAngleDeg;
@@ -308,7 +309,7 @@ const InteractiveMap = () => {
     // NOTE: We anchor the Leaflet icon at the route point (0,0) and use CSS translate(-50%,-50%)
     // so the pill is truly centered on the polyline. This keeps collision math consistent.
     const createDistanceIcon = (distanceNm: number, angleDeg: number, isFlipped: boolean) => {
-      const text = `${distanceNm} miili`;
+      const text = `${distanceNm} NM`;
 
       // Label rotation for readability
       let labelRotation = angleDeg;
@@ -694,7 +695,7 @@ const InteractiveMap = () => {
             Marsruut 2026
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Roomassaarest Orikumini läbi kümnete sadamate – kokku üle 4,000 meremiili.
+            Roomassaarest Ateenani läbi kümnete sadamate – kokku üle 4,000 meremiili.
           </p>
         </motion.div>
 
