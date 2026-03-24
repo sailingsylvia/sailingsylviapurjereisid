@@ -658,10 +658,12 @@ const InteractiveMap = () => {
             }
           | null = null;
 
+        const hasHint = !!cityOffsetHints[stage.id];
         for (const c of candidates) {
           const rect: LabelRect = { x: p.x + c.x, y: p.y + c.y, w: size.w, h: size.h };
           const overlapArea = overlapAreaAny(rect, cityObstacles, padCity);
-          const score = overlapArea * 1000 + c.preferredDist;
+          // For hinted cities, strongly prefer the hint (first candidate) even with minor overlap
+          const score = overlapArea * (hasHint && c.preferredDist === 0 ? 100 : 1000) + c.preferredDist;
 
           if (overlapArea === 0) {
             best = { offset: { x: c.x, y: c.y }, rect, overlapArea, score };
