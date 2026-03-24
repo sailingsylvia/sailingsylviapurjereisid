@@ -1,30 +1,20 @@
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Navigation } from "lucide-react";
-import { voyageSections, totalDistanceSection1 } from "@/data/voyageData";
-import { routeLegWaypoints } from "@/data/routeWaypoints";
+import { totalDistanceSection1 } from "@/data/voyageData";
+import { routeLegWaypoints, mapCities } from "@/data/routeWaypoints";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// Helper to convert "20. juuli 2026" → "20. jul" or "2. august 2026" → "2. aug"
-const formatShortDate = (dateStr: string | undefined): string => {
-  if (!dateStr) return "";
-  
-  const months: Record<string, string> = {
-    jaanuar: "jan", veebruar: "veebr", märts: "märts", aprill: "apr",
-    mai: "mai", juuni: "juuni", juuli: "jul", august: "aug",
-    september: "sept", oktoober: "okt", november: "nov", detsember: "dets"
-  };
-  
-  // Match pattern like "20. juuli 2026"
-  const match = dateStr.match(/^(\d+)\.\s*(\w+)/);
-  if (match) {
-    const day = match[1];
-    const monthFull = match[2].toLowerCase();
-    const monthShort = months[monthFull] || monthFull.slice(0, 3);
-    return `${day}. ${monthShort}`;
-  }
-  return dateStr;
+// Distances between consecutive map cities (nM)
+const legDistances: Record<string, number> = {
+  "roomassaare->kiel": 660,
+  "kiel->dusseldorf": 360,
+  "dusseldorf->brest": 600,
+  "brest->vilamoura": 680,
+  "vilamoura->moraira": 560,
+  "moraira->nettuno": 750,
+  "nettuno->orikum": 350,
 };
 
 const InteractiveMap = () => {
@@ -33,8 +23,8 @@ const InteractiveMap = () => {
   const routeLineRef = useRef<L.Polyline | null>(null);
   const stageMarkersRef = useRef<L.Marker[]>([]);
   const cityLabelMarkersRef = useRef<L.Marker[]>([]);
-  const distanceLabelMarkersRef = useRef<Array<{ marker: L.Marker; toIndex: number }>>([]);
-  const mainStages = voyageSections[0].stages;
+  const distanceLabelMarkersRef = useRef<Array<{ marker: L.Marker; toIndex: number; distance: number }>>([]);
+  const cities = mapCities;
 
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
