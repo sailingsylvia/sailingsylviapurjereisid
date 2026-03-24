@@ -181,8 +181,8 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Arheoloogi-retk", "Llogara rahvuspark", "Albaania köök", "Snorgeldamine"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "5. oktoober 2026",
-        startDate: "5. okt",
+        arrivalDate: "7. oktoober 2026",
+        startDate: "7. okt",
         image: "orikum-marina"
       },
       {
