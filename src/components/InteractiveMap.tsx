@@ -577,11 +577,12 @@ const InteractiveMap = () => {
       // Per-city preferred offset hints to keep labels close to their pins.
       // Values are { dx, dy } pixel offsets from the pin head. Positive dx = right, positive dy = down.
       const cityOffsetHints: Record<string, { dx: number; dy: number }> = {
-        kiel: { dx: 14, dy: -30 },          // right-above
+        kiel: { dx: 14, dy: -50 },          // right, higher up towards land
         dusseldorf: { dx: -100, dy: -8 },    // left
-        vilamoura: { dx: -100, dy: 8 },      // left-below
+        vilamoura: { dx: -90, dy: -18 },     // left-above, closer to coastline
         moraira: { dx: 14, dy: -30 },        // right-above
-        orikum: { dx: -100, dy: -8 },        // left
+        orikum: { dx: -50, dy: 18 },         // centered-below pin
+        nettuno: { dx: 14, dy: -40 },        // right, slightly higher
       };
 
       const createCityOffsetCandidates = (p: L.Point, size: { w: number; h: number }, mapSize: L.Point, cityId?: string) => {
