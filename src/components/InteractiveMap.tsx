@@ -695,7 +695,7 @@ const InteractiveMap = () => {
             Marsruut 2026
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Roomassaarest Orikumini läbi kümnete sadamate – kokku üle 4,000 meremiili.
+            Roomassaarest Ateenani läbi kümnete sadamate – kokku üle 4,000 meremiili.
           </p>
         </motion.div>
 
