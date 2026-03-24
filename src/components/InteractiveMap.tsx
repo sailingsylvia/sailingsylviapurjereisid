@@ -93,13 +93,13 @@ const InteractiveMap = () => {
 
     // Route coordinates (with optional water-waypoint legs so the dashed line doesn't cut across land)
     const routeCoordinates: [number, number][] = [];
-    for (let i = 0; i < mainStages.length; i++) {
-      const stage = mainStages[i];
+    for (let i = 0; i < cities.length; i++) {
+      const stage = cities[i];
       if (i === 0) {
         routeCoordinates.push([stage.coordinates.lat, stage.coordinates.lng]);
         continue;
       }
-      const from = mainStages[i - 1];
+      const from = cities[i - 1];
       const to = stage;
       const key = `${from.id}->${to.id}`;
       const via = routeLegWaypoints[key] ?? [];
@@ -119,7 +119,7 @@ const InteractiveMap = () => {
 
     // Add stage markers (pins)
     stageMarkersRef.current = [];
-    mainStages.forEach((stage, index) => {
+    cities.forEach((stage, index) => {
       const isStart = index === 0;
       const marker = L.marker([stage.coordinates.lat, stage.coordinates.lng], {
         icon: createPinIcon(isStart),
@@ -130,7 +130,7 @@ const InteractiveMap = () => {
 
     // City labels
     cityLabelMarkersRef.current = [];
-    mainStages.forEach((stage) => {
+    cities.forEach((stage) => {
       const marker = L.marker([stage.coordinates.lat, stage.coordinates.lng], {
         icon: L.divIcon({ className: "city-label", html: "", iconSize: [1, 1], iconAnchor: [0, 0] }),
         interactive: false,
@@ -141,8 +141,8 @@ const InteractiveMap = () => {
 
     // Distance labels
     distanceLabelMarkersRef.current = [];
-    for (let i = 1; i < mainStages.length; i++) {
-      const stage = mainStages[i];
+    for (let i = 1; i < cities.length; i++) {
+      const stage = cities[i];
       if (!stage.distanceFromPrevious) continue;
 
       const marker = L.marker([stage.coordinates.lat, stage.coordinates.lng], {
@@ -161,7 +161,7 @@ const InteractiveMap = () => {
     // Create city label icon - compact with short date
     // Note: offsetX/offsetY are pixel offsets from the pin's map point (top-left of the label box)
     const createCityIcon = (
-      stage: (typeof mainStages)[number],
+      stage: (typeof cities)[number],
       offsetX: number,
       offsetY: number,
       size: { w: number; h: number },
@@ -250,7 +250,7 @@ const InteractiveMap = () => {
       };
     })();
 
-    const estimateCityLabelSize = (stage: (typeof mainStages)[number]) => {
+    const estimateCityLabelSize = (stage: (typeof cities)[number]) => {
       const dateText = stage.id === "roomassaare" ? "20. jul" : formatShortDate(stage.arrivalDate);
       const line1 = `${stage.city} (${stage.countryCode})`;
       const line2 = dateText || "";
@@ -350,10 +350,10 @@ const InteractiveMap = () => {
     };
 
     const rerenderAll = () => {
-      const displayPoints = mainStages.map((s) =>
+      const displayPoints = cities.map((s) =>
         map.latLngToContainerPoint([s.coordinates.lat, s.coordinates.lng])
       );
-      const displayLatLngs = mainStages.map(s => L.latLng(s.coordinates.lat, s.coordinates.lng));
+      const displayLatLngs = cities.map(s => L.latLng(s.coordinates.lat, s.coordinates.lng));
       const mapSize = map.getSize();
 
       const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -474,9 +474,9 @@ const InteractiveMap = () => {
 
       const distanceLegs: DistanceLeg[] = [];
       for (const { marker, toIndex } of distanceLabelMarkersRef.current) {
-        const stage = mainStages[toIndex];
+        const stage = cities[toIndex];
         const distance = stage.distanceFromPrevious || 0;
-        const prevStage = mainStages[toIndex - 1];
+        const prevStage = cities[toIndex - 1];
 
         const key = `${prevStage.id}->${stage.id}`;
         const via = routeLegWaypoints[key] ?? [];
@@ -617,8 +617,8 @@ const InteractiveMap = () => {
         return total;
       };
 
-      for (let idx = 0; idx < mainStages.length; idx++) {
-        const stage = mainStages[idx];
+      for (let idx = 0; idx < cities.length; idx++) {
+        const stage = cities[idx];
         const p = displayPoints[idx];
         const size = estimateCityLabelSize(stage);
 
@@ -673,7 +673,7 @@ const InteractiveMap = () => {
         mapInstanceRef.current = null;
       }
     };
-  }, [mainStages]);
+  }, [cities]);
 
   return (
     <section className="py-20 bg-secondary" id="marsruut">
