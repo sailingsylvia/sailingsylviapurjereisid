@@ -170,8 +170,8 @@ const InteractiveMap = () => {
       size: { w: number; h: number },
       leaderLineTo?: { x: number; y: number }
     ) => {
-      const dateText = stage.id === "roomassaare" ? "20. jul" : formatShortDate(stage.arrivalDate);
-      const cityName = stage.city;
+      const dateText = stage.date;
+      const cityName = stage.name;
       const countryCode = stage.countryCode;
       
       return L.divIcon({
