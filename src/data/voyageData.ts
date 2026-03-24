@@ -257,8 +257,8 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Kerge purjetamine", "Supelrannad", "Ateena muuseumid", "Lõpupidu"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "30. oktoober 2026",
-        startDate: "30. okt",
+        arrivalDate: "1. november 2026",
+        startDate: "1. nov",
         image: "hydra-island"
       }
     ]
