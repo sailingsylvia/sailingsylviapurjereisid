@@ -266,4 +266,4 @@ export const voyageSections: VoyageSection[] = [
 ];
 
 // Total distance calculation for section 1
-export const totalDistanceSection1 = 660 + 360 + 600 + 680 + 560 + 100 + 75 + 330 + 245 + 270 + 115; // = 3995 nm
+export const totalDistanceSection1 = 660 + 360 + 600 + 680 + 560 + 750 + 350 + 115; // = 4075 nm
