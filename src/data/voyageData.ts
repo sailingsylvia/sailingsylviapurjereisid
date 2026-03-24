@@ -181,8 +181,8 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Arheoloogi-retk", "Llogara rahvuspark", "Albaania köök", "Snorgeldamine"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "5. oktoober 2026",
-        startDate: "5. okt",
+        arrivalDate: "7. oktoober 2026",
+        startDate: "7. okt",
         image: "orikum-marina"
       },
       {
@@ -198,8 +198,8 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Vanalinna avastamine", "Paleekülastus", "Rannakuurort", "Kreeka köök"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "8. oktoober 2026",
-        startDate: "8. okt",
+        arrivalDate: "10. oktoober 2026",
+        startDate: "10. okt",
         image: "corfu-agios-gordios"
       }
     ]
@@ -223,8 +223,8 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Erinevate saarte külastused", "Snorgeldamine", "Kreeka tavern'id", "Ajaloo avastamine"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "8. oktoober 2026",
-        startDate: "8. okt",
+        arrivalDate: "10. oktoober 2026",
+        startDate: "10. okt",
         image: "joonia-meri"
       },
       {
@@ -240,8 +240,8 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Erinevate saarte külastused", "Kreeka öised tavern'id", "Rannapäevad", "Ajaloo avastamine"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "19. oktoober 2026",
-        startDate: "19. okt",
+        arrivalDate: "21. oktoober 2026",
+        startDate: "21. okt",
         image: "santorini-cyclades"
       },
       {
@@ -257,8 +257,8 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Kerge purjetamine", "Supelrannad", "Ateena muuseumid", "Lõpupidu"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "30. oktoober 2026",
-        startDate: "30. okt",
+        arrivalDate: "1. november 2026",
+        startDate: "1. nov",
         image: "hydra-island"
       }
     ]
