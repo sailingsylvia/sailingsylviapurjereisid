@@ -198,8 +198,8 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Vanalinna avastamine", "Paleekülastus", "Rannakuurort", "Kreeka köök"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "8. oktoober 2026",
-        startDate: "8. okt",
+        arrivalDate: "10. oktoober 2026",
+        startDate: "10. okt",
         image: "corfu-agios-gordios"
       }
     ]
