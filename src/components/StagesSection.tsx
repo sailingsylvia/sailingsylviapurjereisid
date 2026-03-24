@@ -20,15 +20,13 @@ import hydraIsland from "@/assets/hydra-island.jpg";
 
 // Images for each destination
 const stageImages: Record<string, string> = {
-  "roomassaare": roomassaareHarbor,
-  "kiel": kielCanal,
-  "dusseldorf": dusseldorfRhine,
-  "brest": brestCastle,
-  "vilamoura": vilamouraPort,
-  "moraira": morairaBeach,
-  "nettuno": marinaDelNettuno,
-  "orikum": orikumMarina,
-  "korfu": corfuAgiosGordios,
+  "roomassaare-kiel": roomassaareHarbor,
+  "kiel-dusseldorf": kielCanal,
+  "dusseldorf-brest": dusseldorfRhine,
+  "brest-vilamoura": brestCastle,
+  "vilamoura-moraira": vilamouraPort,
+  "moraira-nettuno": morairaBeach,
+  "nettuno-orikum": marinaDelNettuno,
   "lefkada": jooniaMeri,
   "egeuse": santoriniCyclades,
   "ateena": hydraIsland,
