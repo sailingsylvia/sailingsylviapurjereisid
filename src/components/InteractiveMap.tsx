@@ -476,9 +476,9 @@ const InteractiveMap = () => {
       };
 
       const distanceLegs: DistanceLeg[] = [];
-      for (const { marker, toIndex } of distanceLabelMarkersRef.current) {
+      for (const { marker, toIndex, distance } of distanceLabelMarkersRef.current) {
         const stage = cities[toIndex];
-        const distance = stage.distanceFromPrevious || 0;
+        const prevStage = cities[toIndex - 1];
         const prevStage = cities[toIndex - 1];
 
         const key = `${prevStage.id}->${stage.id}`;
