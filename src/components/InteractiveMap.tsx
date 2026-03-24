@@ -254,8 +254,8 @@ const InteractiveMap = () => {
     })();
 
     const estimateCityLabelSize = (stage: (typeof cities)[number]) => {
-      const dateText = stage.id === "roomassaare" ? "20. jul" : formatShortDate(stage.arrivalDate);
-      const line1 = `${stage.city} (${stage.countryCode})`;
+      const dateText = stage.date;
+      const line1 = `${stage.name} (${stage.countryCode})`;
       const line2 = dateText || "";
 
       // Extra-large safety margins to avoid any visual overlap even if fonts differ slightly.
