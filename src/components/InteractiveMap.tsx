@@ -646,7 +646,7 @@ const InteractiveMap = () => {
         const p = displayPoints[idx];
         const size = estimateCityLabelSize(stage);
 
-        const candidates = createCityOffsetCandidates(p, size, mapSize);
+        const candidates = createCityOffsetCandidates(p, size, mapSize, stage.id);
 
         let best:
           | {
