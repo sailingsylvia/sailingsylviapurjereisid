@@ -10,8 +10,6 @@ import dusseldorfRhine from "@/assets/dusseldorf-rhine.jpg";
 import brestCastle from "@/assets/brest-castle.jpg";
 import vilamouraPort from "@/assets/vilamoura-port.jpg";
 import morairaBeach from "@/assets/moraira-beach-v3.jpg";
-import mallorcaLagoon from "@/assets/mallorca-lagoon.jpg";
-import sardiniaCalaLuna from "@/assets/sardinia-cala-luna.jpg";
 import marinaDelNettuno from "@/assets/marina-del-nettuno.jpg";
 import orikumMarina from "@/assets/orikum-marina.jpg";
 import corfuAgiosGordios from "@/assets/corfu-agios-gordios.jpg";
@@ -19,7 +17,6 @@ import jooniaMeri from "@/assets/joonia-meri.jpg";
 import akropolis from "@/assets/akropolis.jpg";
 import santoriniCyclades from "@/assets/santorini-cyclades.jpg";
 import hydraIsland from "@/assets/hydra-island.jpg";
-import ibizaBeach from "@/assets/ibiza-beach.jpg";
 
 // Images for each destination
 const stageImages: Record<string, string> = {
@@ -29,9 +26,6 @@ const stageImages: Record<string, string> = {
   "brest": brestCastle,
   "vilamoura": vilamouraPort,
   "moraira": morairaBeach,
-  "ibiza": ibizaBeach,
-  "mallorca": mallorcaLagoon,
-  "sardiinia": sardiniaCalaLuna,
   "nettuno": marinaDelNettuno,
   "orikum": orikumMarina,
   "korfu": corfuAgiosGordios,
