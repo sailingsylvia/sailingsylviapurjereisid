@@ -62,7 +62,7 @@ const HeroSection = () => {
           transition={{ duration: 0.8, delay: 0.4 }}
         >
           Avasta Euroopa ilusamaid sadamaid ja rannikuid meie eksklusiivsel purjereisil. 
-          Roomassaarest Kreeka saarestikku – üle {totalDistanceSection1.toLocaleString()} meremiili seiklust!
+          Roomassaarest Kreeka saarestikku – üle 4,000 meremiili seiklust!
         </motion.p>
 
         <motion.div
