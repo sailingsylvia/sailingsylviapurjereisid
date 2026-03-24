@@ -240,8 +240,8 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Erinevate saarte külastused", "Kreeka öised tavern'id", "Rannapäevad", "Ajaloo avastamine"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "19. oktoober 2026",
-        startDate: "19. okt",
+        arrivalDate: "21. oktoober 2026",
+        startDate: "21. okt",
         image: "santorini-cyclades"
       },
       {
