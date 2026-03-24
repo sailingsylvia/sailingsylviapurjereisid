@@ -613,7 +613,7 @@ const InteractiveMap = () => {
 
         // Add the hint offset first if available
         if (hint) {
-          const clamped = clampOffsetToMap(p, size, hint, mapSize, 6);
+          const clamped = clampOffsetToMap(p, size, { x: hint.dx, y: hint.dy }, mapSize, 6);
           out.push({ x: clamped.x, y: clamped.y, preferredDist: 0 });
         }
 
