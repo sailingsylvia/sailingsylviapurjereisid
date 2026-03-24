@@ -27,10 +27,9 @@ const BookingForm = () => {
     message: "",
   });
 
-  // Combine all stages for dropdown, excluding start point
+  // Combine all stages for dropdown
   const allStages = voyageSections.flatMap((section) =>
     section.stages
-      .filter((stage) => !stage.isStartPoint)
       .map((stage) => ({
         id: stage.id,
         label: `${stage.city} (${stage.duration})`,
