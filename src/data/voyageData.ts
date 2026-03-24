@@ -12,6 +12,7 @@ export interface VoyageStage {
   pricePerDay: number;
   priceInfo: string;
   arrivalDate?: string;
+  startDate?: string;
   isStartPoint?: boolean;
   hasSailingTraining?: boolean;
   image?: string;
@@ -57,6 +58,7 @@ export const voyageSections: VoyageSection[] = [
         pricePerDay: 0,
         priceInfo: "Stardipunkt",
         arrivalDate: "20. juuli 2026",
+        startDate: "20. jul",
         isStartPoint: true,
         image: "roomassaare-harbor"
       },
@@ -65,7 +67,7 @@ export const voyageSections: VoyageSection[] = [
         city: "Kiel",
         country: "Saksamaa",
         countryCode: "GER",
-        duration: "14 ööpäeva",
+        duration: "14 päeva",
         distanceFromPrevious: 660,
         coordinates: { lat: 54.3233, lng: 10.1228 },
         description: "Kiel on Läänemere üks olulisemaid sadamalinnu ja purjetamiskultuuri süda. Siit algab tee läbi Kieli kanali Põhjamere poole.",
@@ -73,7 +75,8 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Purjetamismuuseumi külastus", "Fjordi kruiis", "Saksa mereköök", "Kanaliteekonna algus"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "2. august 2026",
+        arrivalDate: "3. august 2026",
+        startDate: "3. aug",
         hasSailingTraining: true,
         image: "kiel-canal"
       },
@@ -82,7 +85,7 @@ export const voyageSections: VoyageSection[] = [
         city: "Düsseldorf",
         country: "Saksamaa",
         countryCode: "GER",
-        duration: "7 ööpäeva",
+        duration: "7 päeva",
         distanceFromPrevious: 360,
         coordinates: { lat: 51.2277, lng: 6.7735 },
         description: "Reini äärne metropol ühendab kunsti, moodi ja äri. Düsseldorfi vanalinn on tuntud kui 'maailma pikim lett' oma arvukate pubide ja restoranidega.",
@@ -90,7 +93,8 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Altbieri proovimine", "Galeriiküla", "Reini promenaad", "Ostlemine Königs alleel"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "9. august 2026",
+        arrivalDate: "10. august 2026",
+        startDate: "10. aug",
         hasSailingTraining: true,
         image: "dusseldorf-rhine"
       },
@@ -99,7 +103,7 @@ export const voyageSections: VoyageSection[] = [
         city: "Brest",
         country: "Prantsusmaa",
         countryCode: "FRA",
-        duration: "13 ööpäeva",
+        duration: "13 päeva",
         distanceFromPrevious: 600,
         coordinates: { lat: 48.3904, lng: -4.4861 },
         description: "Bretagne'i suurim sadamalinn Brest on tuntud oma merendusajaloo ja vapustavate rannikumaastikega. Océanopolis on Euroopa üks suurimaid mereakvaariume.",
@@ -107,7 +111,8 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Mereakvaariumi külastus", "Bretagne'i köök", "Kindluse avastamine", "Ranniku matkarajad"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "16. august 2026",
+        arrivalDate: "23. august 2026",
+        startDate: "23. aug",
         hasSailingTraining: true,
         image: "brest-castle"
       },
@@ -116,7 +121,7 @@ export const voyageSections: VoyageSection[] = [
         city: "Vilamoura",
         country: "Portugal",
         countryCode: "POR",
-        duration: "13 ööpäeva",
+        duration: "13 päeva",
         distanceFromPrevious: 680,
         coordinates: { lat: 37.0765, lng: -8.1136 },
         description: "Algarve ranniku pärl on üks Euroopa eksklusiivsemaid jahtide sihtkohti. Kuldne liiv, kristallselge vesi ja maailmatasemel golfiväljakud.",
@@ -124,7 +129,8 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Delfiinide vaatamine", "Golfipartii", "Algarve köök", "Koobasretk paadiga"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "29. august 2026",
+        arrivalDate: "5. september 2026",
+        startDate: "5. sept",
         hasSailingTraining: true,
         image: "vilamoura-port"
       },
@@ -133,7 +139,7 @@ export const voyageSections: VoyageSection[] = [
         city: "Moraira",
         country: "Hispaania",
         countryCode: "ESP",
-        duration: "14 ööpäeva",
+        duration: "14 päeva",
         distanceFromPrevious: 560,
         coordinates: { lat: 38.6879, lng: 0.1375 },
         description: "Costa Blanca peidetud pärl säilitab endiselt kalurikülaliku võlu. Türkiissinine vesi ja valged majad loovad Vahemere idülli.",
@@ -141,7 +147,8 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Snorgeldamine", "Kohalik mereköök", "Jalgsimatk Cap d'Orile", "Veinidegustatsioon"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "11. september 2026",
+        arrivalDate: "19. september 2026",
+        startDate: "19. sept",
         image: "moraira-beach"
       },
       {
@@ -149,7 +156,7 @@ export const voyageSections: VoyageSection[] = [
         city: "Ibiza",
         country: "Hispaania",
         countryCode: "ESP",
-        duration: "1 ööpäev",
+        duration: "1 päev",
         distanceFromPrevious: 100,
         coordinates: { lat: 38.9067, lng: 1.4206 },
         description: "Ibiza on enamat kui peolinn – UNESCO vanalinn, kristallselged lahesopid ja Vahemere autentseim boheemlik atmosfäär.",
@@ -157,7 +164,8 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Vanalinna jalutuskäik", "Loojangukruiis", "Soolajärvede külastus", "Rannapäev"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "25. september 2026",
+        arrivalDate: "20. september 2026",
+        startDate: "20. sept",
         image: "ibiza-beach"
       },
       {
@@ -165,7 +173,7 @@ export const voyageSections: VoyageSection[] = [
         city: "Mallorca",
         country: "Hispaania",
         countryCode: "ESP",
-        duration: "1 ööpäev",
+        duration: "1 päev",
         distanceFromPrevious: 75,
         coordinates: { lat: 39.5696, lng: 2.6502 },
         description: "Baleaari saarte pärl on purjetajate paradiis. Palma katedraal, Serra de Tramuntana mäed ja kristallselge vesi.",
@@ -173,7 +181,8 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Katedraali külastus", "Mägimatk", "Oliivisaagi maitseelamus", "Rannapäev"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "26. september 2026",
+        arrivalDate: "21. september 2026",
+        startDate: "21. sept",
         image: "mallorca-lagoon"
       },
       {
@@ -181,7 +190,7 @@ export const voyageSections: VoyageSection[] = [
         city: "Sardiinia",
         country: "Itaalia",
         countryCode: "ITA",
-        duration: "2 ööpäeva",
+        duration: "2 päeva",
         distanceFromPrevious: 330,
         coordinates: { lat: 40.1209, lng: 9.0129 },
         description: "Vahemere üks ilusamaid saari pakub kristallselgeid veekogusid, muistseid traditsoone ja maailmakuulsat Costa Smeralda glamuuri.",
@@ -189,23 +198,42 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Paadireis La Maddalenale", "Nuraghe'de avastamine", "Sardiinia köök", "Snorgeldamine"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "27. september 2026",
+        arrivalDate: "23. september 2026",
+        startDate: "23. sept",
         image: "sardinia-cala-luna"
+      },
+      {
+        id: "nettuno",
+        city: "Marina del Nettuno",
+        country: "Sitsiilia, Itaalia",
+        countryCode: "ITA",
+        duration: "6 päeva",
+        distanceFromPrevious: 245,
+        coordinates: { lat: 38.19, lng: 15.56 },
+        description: "Messina väina ääres asuv Marina del Nettuno on strateegiline peatuspunkt teel Kreekasse. Sitsiilia vulkaaniline maastik, rikkalik köök ja tuhandeaastane ajalugu.",
+        highlights: ["Messina väin", "Etna vulkaan", "Taormina", "Sitsiilia köök"],
+        activities: ["Taormina külastus", "Sitsiilia köögielamus", "Messina vaatamisväärsused", "Etna vaated"],
+        pricePerDay: 120,
+        priceInfo: "",
+        arrivalDate: "29. september 2026",
+        startDate: "29. sept",
+        image: "marina-del-nettuno"
       },
       {
         id: "orikum",
         city: "Orikum",
         country: "Albaania",
         countryCode: "ALB",
-        duration: "14 ööpäeva",
-        distanceFromPrevious: 620,
+        duration: "6 päeva",
+        distanceFromPrevious: 270,
         coordinates: { lat: 40.3269, lng: 19.4314 },
         description: "Albaania Riviera peidetud aare – muistse Rooma sadama varemed kohtuvad puutumata looduse ja Albaania külalislahkusega.",
         highlights: ["Antiiksadam", "Llogara pass", "Drymades rannad", "Oricum arheoloogia park"],
         activities: ["Arheoloogi-retk", "Llogara rahvuspark", "Albaania köök", "Snorgeldamine"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "29. september 2026",
+        arrivalDate: "5. oktoober 2026",
+        startDate: "5. okt",
         image: "orikum-marina"
       },
       {
@@ -213,7 +241,7 @@ export const voyageSections: VoyageSection[] = [
         city: "Korfu",
         country: "Kreeka",
         countryCode: "GRE",
-        duration: "3 ööpäeva",
+        duration: "3 päeva",
         distanceFromPrevious: 115,
         coordinates: { lat: 39.6243, lng: 19.9217 },
         description: "Joonia mere roheline pärl – Korfu ühendab kreeka, veneetsia ja briti mõjutused üheks ainulaadseks kultuurikogemuseks.",
@@ -221,7 +249,8 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Vanalinna avastamine", "Paleekülastus", "Rannakuurort", "Kreeka köök"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "13. oktoober 2026",
+        arrivalDate: "8. oktoober 2026",
+        startDate: "8. okt",
         image: "corfu-agios-gordios"
       }
     ]
@@ -245,7 +274,8 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Erinevate saarte külastused", "Snorgeldamine", "Kreeka tavern'id", "Ajaloo avastamine"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "17. oktoober 2026",
+        arrivalDate: "8. oktoober 2026",
+        startDate: "8. okt",
         image: "joonia-meri"
       },
       {
@@ -261,7 +291,8 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Erinevate saarte külastused", "Kreeka öised tavern'id", "Rannapäevad", "Ajaloo avastamine"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "28. oktoober 2026",
+        arrivalDate: "19. oktoober 2026",
+        startDate: "19. okt",
         image: "santorini-cyclades"
       },
       {
@@ -277,7 +308,8 @@ export const voyageSections: VoyageSection[] = [
         activities: ["Kerge purjetamine", "Supelrannad", "Ateena muuseumid", "Lõpupidu"],
         pricePerDay: 120,
         priceInfo: "",
-        arrivalDate: "8. november 2026",
+        arrivalDate: "30. oktoober 2026",
+        startDate: "30. okt",
         image: "hydra-island"
       }
     ]
@@ -285,4 +317,4 @@ export const voyageSections: VoyageSection[] = [
 ];
 
 // Total distance calculation for section 1
-export const totalDistanceSection1 = 660 + 360 + 600 + 680 + 560 + 100 + 75 + 330 + 620 + 115; // = 4100 nm
+export const totalDistanceSection1 = 660 + 360 + 600 + 680 + 560 + 100 + 75 + 330 + 245 + 270 + 115; // = 3995 nm

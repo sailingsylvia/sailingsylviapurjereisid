@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { voyageSections } from "@/data/voyageData";
 import StageCard from "./StageCard";
-import { Sailboat, Anchor } from "lucide-react";
+import { Sailboat, Anchor, Moon, Phone, Info } from "lucide-react";
 
 // Import images
 import roomassaareHarbor from "@/assets/roomassaare-harbor.jpg";
@@ -12,17 +12,13 @@ import vilamouraPort from "@/assets/vilamoura-port.jpg";
 import morairaBeach from "@/assets/moraira-beach-v3.jpg";
 import mallorcaLagoon from "@/assets/mallorca-lagoon.jpg";
 import sardiniaCalaLuna from "@/assets/sardinia-cala-luna.jpg";
+import marinaDelNettuno from "@/assets/marina-del-nettuno.jpg";
 import orikumMarina from "@/assets/orikum-marina.jpg";
 import corfuAgiosGordios from "@/assets/corfu-agios-gordios.jpg";
 import jooniaMeri from "@/assets/joonia-meri.jpg";
 import akropolis from "@/assets/akropolis.jpg";
-import parosVillage from "@/assets/paros-village.jpg";
 import santoriniCyclades from "@/assets/santorini-cyclades.jpg";
 import hydraIsland from "@/assets/hydra-island.jpg";
-import peloponneseCoast from "@/assets/peloponnese-coast.jpg";
-import piraeusPort from "@/assets/piraeus-port.jpg";
-
-// Import Ibiza image
 import ibizaBeach from "@/assets/ibiza-beach.jpg";
 
 // Images for each destination
@@ -36,6 +32,7 @@ const stageImages: Record<string, string> = {
   "ibiza": ibizaBeach,
   "mallorca": mallorcaLagoon,
   "sardiinia": sardiniaCalaLuna,
+  "nettuno": marinaDelNettuno,
   "orikum": orikumMarina,
   "korfu": corfuAgiosGordios,
   "lefkada": jooniaMeri,
@@ -49,6 +46,43 @@ const StagesSection = () => {
   return (
     <section className="py-24 bg-background" id="etapid">
       <div className="container mx-auto px-4">
+        {/* Info boxes */}
+        <div className="max-w-3xl mx-auto mb-16 space-y-4">
+          <motion.div
+            className="p-5 bg-secondary rounded-xl border border-border flex items-start gap-4"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <Moon className="text-ocean-medium mt-0.5 shrink-0" size={22} />
+            <div>
+              <h3 className="font-display text-lg text-foreground mb-1">Ööetapid</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Igal õhtul jõuame erinevasse sadamasse, <strong>välja arvatud</strong> kolmel pikemal üleminekul: 
+                Brestist Hispaania suunas, Mallorcalt Sardiinia suunas ja Sardiiniast Sitsiilia suunas — need on ööetapid, 
+                kus purjetame läbi öö.
+              </p>
+            </div>
+          </motion.div>
+
+          <motion.div
+            className="p-5 bg-secondary rounded-xl border border-border flex items-start gap-4"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+          >
+            <Phone className="text-ocean-medium mt-0.5 shrink-0" size={22} />
+            <div>
+              <h3 className="font-display text-lg text-foreground mb-1">Erisoovid</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Erisoovide korral (nt varem peale tulemine, varem maha minemine vms) palun võtke kapteniga personaalselt ühendust — 
+                leiame koos parima lahenduse.
+              </p>
+            </div>
+          </motion.div>
+        </div>
+
         {voyageSections.map((section) => (
           <div key={section.id} className="mb-32 last:mb-0">
             <motion.div

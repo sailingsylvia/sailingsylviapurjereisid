@@ -76,10 +76,12 @@ const StageCard = ({ stage, index, image }: StageCardProps) => {
                 <MapPin size={14} />
                 {stage.country}
               </span>
-              <span className="flex items-center gap-1">
-                <Calendar size={14} />
-                {stage.duration}
-              </span>
+              {stage.startDate && (
+                <span className="flex items-center gap-1">
+                  <Calendar size={14} />
+                  {stage.startDate}
+                </span>
+              )}
             </div>
           </div>
         </motion.div>
@@ -88,14 +90,14 @@ const StageCard = ({ stage, index, image }: StageCardProps) => {
       {/* Content */}
       <div className="w-full lg:w-1/2 px-4 lg:px-8">
         {/* Duration and booking info - only for non-start points */}
-        {showPrice && (
+        {showPrice && stage.startDate && (
           <div className="mb-6 p-4 bg-secondary rounded-xl border border-border">
             <div className="flex items-center gap-4">
               <Calendar className="text-ocean-medium" size={20} />
               <div>
-                <span className="font-display text-lg text-foreground">{stage.duration}</span>
-                {stage.arrivalDate && (
-                  <span className="text-sm text-muted-foreground ml-2">• alates {stage.arrivalDate}</span>
+                <span className="font-display text-lg text-foreground">Start: {stage.startDate}</span>
+                {stage.distanceFromPrevious && (
+                  <span className="text-sm text-muted-foreground ml-2">• {stage.distanceFromPrevious} nM</span>
                 )}
               </div>
             </div>
