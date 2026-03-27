@@ -13,6 +13,7 @@ const StageCard = ({ stage, index, image }: StageCardProps) => {
   const isEven = index % 2 === 0;
 
   const scrollToBooking = () => {
+    window.dispatchEvent(new CustomEvent("select-stage", { detail: stage.id }));
     const element = document.getElementById("broneeri");
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
