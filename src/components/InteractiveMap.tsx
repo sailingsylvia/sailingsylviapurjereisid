@@ -88,8 +88,9 @@ const InteractiveMap = () => {
       kiel:       { direction: "top",   offset: [0, -36] },
       dusseldorf: { direction: "right", offset: [15, -18] },
       vilamoura:  { direction: "left",  offset: [-10, -18] },
-      orikum:     { direction: "bottom",offset: [0, 54] },
+      orikum:     { direction: "top",   offset: [0, -30] },
       nettuno:    { direction: "left",  offset: [-15, -40] },
+      ateena:     { direction: "right", offset: [15, -18] },
     };
 
     // ---- City markers with permanent tooltips anchored to pin ----
