@@ -197,10 +197,10 @@ const InteractiveMap = () => {
             color:#fff;
             white-space:nowrap;
             box-shadow:0 2px 6px rgba(0,0,0,0.25);
-            transform:translate(-50%,-50%);
+            transform:translate(-50%,-50%) rotate(${dirAngle}deg);
             pointer-events:none;
           ">
-            <svg width="12" height="8" viewBox="0 0 12 8" fill="none" style="transform:rotate(${dirAngle}deg);">
+            <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
               <path d="M7 1L11 4L7 7" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               <path d="M1 4H10" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
             </svg>
