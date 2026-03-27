@@ -153,7 +153,7 @@ const InteractiveMap = () => {
         [to.coordinates.lat, to.coordinates.lng],
       ];
 
-      // Find geographic midpoint along the segment
+      // Find geographic midpoint along the segment and direction
       let totalLen = 0;
       const segLens: number[] = [];
       for (let k = 1; k < segCoords.length; k++) {
@@ -167,11 +167,16 @@ const InteractiveMap = () => {
       let acc = 0;
       let midLat = segCoords[0][0];
       let midLng = segCoords[0][1];
+      let dirAngle = 0; // degrees, 0 = right
       for (let k = 0; k < segLens.length; k++) {
         if (acc + segLens[k] >= half) {
           const t = (half - acc) / segLens[k];
           midLat = segCoords[k][0] + t * (segCoords[k + 1][0] - segCoords[k][0]);
           midLng = segCoords[k][1] + t * (segCoords[k + 1][1] - segCoords[k][1]);
+          // Calculate direction angle (in screen coords: lng increases right, lat increases up)
+          const dLng = segCoords[k + 1][1] - segCoords[k][1];
+          const dLat = segCoords[k + 1][0] - segCoords[k][0];
+          dirAngle = Math.atan2(-dLat, dLng) * (180 / Math.PI); // negative dLat because screen Y is inverted
           break;
         }
         acc += segLens[k];
@@ -195,7 +200,7 @@ const InteractiveMap = () => {
             transform:translate(-50%,-50%);
             pointer-events:none;
           ">
-            <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+            <svg width="12" height="8" viewBox="0 0 12 8" fill="none" style="transform:rotate(${dirAngle}deg);">
               <path d="M7 1L11 4L7 7" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               <path d="M1 4H10" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
             </svg>
