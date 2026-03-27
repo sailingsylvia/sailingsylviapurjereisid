@@ -36,6 +36,15 @@ const BookingForm = () => {
       }))
   );
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const stageId = (e as CustomEvent).detail;
+      setFormData((prev) => ({ ...prev, stage: stageId }));
+    };
+    window.addEventListener("select-stage", handler);
+    return () => window.removeEventListener("select-stage", handler);
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     

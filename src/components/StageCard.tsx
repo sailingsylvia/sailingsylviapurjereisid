@@ -186,11 +186,9 @@ const StageCard = ({ stage, index, image }: StageCardProps) => {
           </div>
         )}
 
-        {!stage.isStartPoint && (
-          <Button variant="hero" size="lg" onClick={scrollToBooking}>
-            Broneeri see etapp
-          </Button>
-        )}
+        <Button variant="hero" size="lg" onClick={scrollToBooking}>
+          Broneeri see etapp
+        </Button>
       </div>
     </motion.article>
   );
