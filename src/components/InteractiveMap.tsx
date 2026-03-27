@@ -85,10 +85,10 @@ const InteractiveMap = () => {
 
     // Per-city tooltip direction & offset overrides
     const cityTooltipConfig: Record<string, { direction: L.Direction; offset: [number, number] }> = {
-      kiel:       { direction: "top",   offset: [0, -50] },
+      kiel:       { direction: "top",   offset: [0, -36] },
       dusseldorf: { direction: "right", offset: [15, -18] },
       vilamoura:  { direction: "left",  offset: [-10, -18] },
-      orikum:     { direction: "bottom",offset: [0, 32] },
+      orikum:     { direction: "bottom",offset: [0, 44] },
       nettuno:    { direction: "left",  offset: [-15, -40] },
     };
 
