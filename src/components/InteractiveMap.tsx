@@ -83,6 +83,14 @@ const InteractiveMap = () => {
       });
     };
 
+    // Per-city tooltip direction & offset overrides
+    const cityTooltipConfig: Record<string, { direction: L.Direction; offset: [number, number] }> = {
+      kiel:     { direction: "top",   offset: [0, -50] },
+      vilamoura:{ direction: "left",  offset: [-10, -18] },
+      orikum:   { direction: "bottom",offset: [0, 10] },
+      nettuno:  { direction: "top",   offset: [0, -40] },
+    };
+
     // ---- City markers with permanent tooltips anchored to pin ----
     cities.forEach((stage, index) => {
       const isStart = index === 0;
@@ -93,7 +101,6 @@ const InteractiveMap = () => {
         zIndexOffset: 1000,
       }).addTo(map);
 
-      // Permanent tooltip — always stays exactly at the pin
       const tooltipHtml = `
         <div style="
           display:inline-flex;
@@ -117,10 +124,14 @@ const InteractiveMap = () => {
           ${stage.date ? `<div style="font-size:9px;color:rgba(248,250,252,0.65);font-weight:500;">${stage.date}</div>` : ""}
         </div>`;
 
+      const custom = cityTooltipConfig[stage.id];
+      const direction: L.Direction = isStart ? "right" : (custom?.direction ?? "top");
+      const offset: [number, number] = isStart ? [12, -10] : (custom?.offset ?? [0, -30]);
+
       marker.bindTooltip(tooltipHtml, {
         permanent: true,
-        direction: index === 0 ? "right" : "top",
-        offset: index === 0 ? [12, -10] : [0, -(isStart ? 38 : 30)],
+        direction,
+        offset,
         className: "sylvia-city-tooltip",
         opacity: 1,
       });
