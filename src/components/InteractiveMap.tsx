@@ -184,8 +184,20 @@ const InteractiveMap = () => {
 
       // Normalize angle so text always reads left-to-right
       let labelAngle = dirAngle;
-      if (labelAngle > 90) labelAngle -= 180;
-      if (labelAngle < -90) labelAngle += 180;
+      let flipped = false;
+      if (labelAngle > 90) { labelAngle -= 180; flipped = true; }
+      if (labelAngle < -90) { labelAngle += 180; flipped = true; }
+
+      // Arrow: point right normally, point left if label was flipped
+      const arrowSvg = flipped
+        ? `<svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+             <path d="M5 1L1 4L5 7" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+             <path d="M11 4H2" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+           </svg>`
+        : `<svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+             <path d="M7 1L11 4L7 7" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+             <path d="M1 4H10" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+           </svg>`;
 
       const distIcon = L.divIcon({
         className: "",
@@ -205,10 +217,7 @@ const InteractiveMap = () => {
             transform:translate(-50%,-50%) rotate(${labelAngle}deg);
             pointer-events:none;
           ">
-            <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
-              <path d="M7 1L11 4L7 7" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M1 4H10" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
+            ${arrowSvg}
             <span>${distance} NM</span>
           </div>`,
         iconSize: [1, 1],
