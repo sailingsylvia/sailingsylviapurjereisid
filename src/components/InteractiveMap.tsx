@@ -182,6 +182,11 @@ const InteractiveMap = () => {
         acc += segLens[k];
       }
 
+      // Normalize angle so text always reads left-to-right
+      let labelAngle = dirAngle;
+      if (labelAngle > 90) labelAngle -= 180;
+      if (labelAngle < -90) labelAngle += 180;
+
       const distIcon = L.divIcon({
         className: "",
         html: `
@@ -197,7 +202,7 @@ const InteractiveMap = () => {
             color:#fff;
             white-space:nowrap;
             box-shadow:0 2px 6px rgba(0,0,0,0.25);
-            transform:translate(-50%,-50%) rotate(${dirAngle}deg);
+            transform:translate(-50%,-50%) rotate(${labelAngle}deg);
             pointer-events:none;
           ">
             <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
