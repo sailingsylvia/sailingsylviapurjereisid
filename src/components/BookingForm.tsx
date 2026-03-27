@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Send, Anchor, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,15 @@ const BookingForm = () => {
         label: `${stage.city} (${stage.duration})`,
       }))
   );
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const stageId = (e as CustomEvent).detail;
+      setFormData((prev) => ({ ...prev, stage: stageId }));
+    };
+    window.addEventListener("select-stage", handler);
+    return () => window.removeEventListener("select-stage", handler);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
